@@ -355,7 +355,7 @@ export default function Home() {
           if (cloudRes.ok) {
             const cloudData = await cloudRes.json();
             if (cloudData.data && cloudData.data.length > 0) {
-              foundData = cloudData.data.map((r: any) => ({ ...r, name: `☁️ ${r.name}` }));
+              foundData = cloudData.data.map((r: any) => ({ ...r, name: `Local (Render) - ${r.name}` }));
               if (cloudData.tmdbId && activeAnime && !activeAnime.tmdbId) {
                 setSelectedAnime({ ...activeAnime, tmdbId: cloudData.tmdbId });
               }
