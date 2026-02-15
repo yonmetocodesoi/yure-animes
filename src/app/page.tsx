@@ -347,9 +347,9 @@ export default function Home() {
       let foundData = null;
       for (const slug of slugsToTry) {
         try {
-          const res = await fetch(`/api/episode/${slug}/${currentSea}/${currentEp}`);
+          const res = await fetch(`/api/episode/${slug}/${currentSea}/${currentEp}?tmdbId=${selectedAnime?.tmdbId || ''}&type=${selectedAnime?.type || 'serie'}`);
           const data = await res.json();
-          if (res.status === 200 && !data.error && data.data && data.data.some((r: any) => r.episodes[0] && !r.episodes[0].error)) {
+          if (res.status === 200 && !data.error && data.data && data.data.length > 0) {
             foundData = data.data;
             break;
           }
@@ -358,39 +358,15 @@ export default function Home() {
         }
       }
 
-      // Servidores Estáveis de Backup (Sempre disponíveis para o usuário)
+      // Servidores Estáveis de Backup (Verificados para 2026)
       const currentAnime = selectedAnime || animeList.find((a: any) => a.slug === baseSlug);
       const tmdbId = currentAnime?.tmdbId;
       const isMovie = currentAnime?.type === 'movie';
 
       const cloudFallbacks = tmdbId ? [
         {
-          name: 'VIP MASTER Retro [BR]',
-          slug: 'stable-1',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://gogoanime3.co/${(selectedAnime?.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-movie`
-              : `https://gogoanime3.co/${(selectedAnime?.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-episode-${currentEp}`
-          }]
-        },
-        {
-          name: 'VIP MASTER Turbo [BR]',
-          slug: 'stable-2',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://vidsrc.icu/embed/movie/${tmdbId}`
-              : `https://vidsrc.icu/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-          }]
-        },
-        {
           name: 'VIP MASTER Play [BR]',
-          slug: 'stable-3',
+          slug: 'stable-1',
           has_ads: true,
           is_embed: true,
           episodes: [{
@@ -401,18 +377,19 @@ export default function Home() {
           }]
         },
         {
-          name: 'Global Play (HD)',
-          slug: 'stable-4',
+          name: 'VIP MASTER 4K [BR]',
+          slug: 'stable-2',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://vidsrc.net/embed/movie/${tmdbId}`
-              : `https://vidsrc.net/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://vidsrc.pm/embed/movie/${tmdbId}`
+              : `https://vidsrc.pm/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         }
-      ] : []; // Build trigger: $(new Date().getTime()) 
+      ] : [];
+      // Build trigger: $(new Date().getTime()) 
 
       if (foundData) {
         setResults([...foundData, ...cloudFallbacks]);
@@ -493,8 +470,11 @@ export default function Home() {
 
   const isEmbed = (url: string) => {
     if (!url) return false;
-    const embeds = ['iframe', 'animesonline', 'blogger', 'google', 'youtube', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed', 'smashy', 'gogo', 'anime', '.co', '.net', '.icu', '.xyz', '.me', '.pm'];
-    return embeds.some(e => url.includes(e));
+    // Aggressive embed detection: if it's not a common video extension, treat as embed
+    const videoExtensions = ['.mp4', '.mkv', '.webm', '.m3u8', '.mpd'];
+    const lowerUrl = url.toLowerCase();
+    if (videoExtensions.some(ext => lowerUrl.includes(ext) && !lowerUrl.includes('player'))) return false;
+    return true; // Default to embed for security and reliability with external sources
   };
 
   return (
