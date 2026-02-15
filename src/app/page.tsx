@@ -349,7 +349,7 @@ export default function Home() {
 
       // 1. Tentar o Servidor Local (PC) - Prioridade para o celular acessar
       try {
-        const LOCAL_SERVER = 'https://corded-stud.trycloudflare.com'; // Túnel Cloudflare (estável)
+        const LOCAL_SERVER = 'https://sugoi-br-api.loca.lt'; // Novo túnel estável
         for (const s of slugsToTry) {
           const localRes = await fetch(`${LOCAL_SERVER}/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
           if (localRes.ok) {
