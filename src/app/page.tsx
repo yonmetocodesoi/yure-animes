@@ -703,7 +703,6 @@ export default function Home() {
                           className="w-full h-full border-0 shadow-2xl"
                           allowFullScreen
                           allow="autoplay; fullscreen"
-                          sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts"
                         />
                       ) : (
                         <video
