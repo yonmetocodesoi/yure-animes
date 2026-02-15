@@ -28,7 +28,13 @@ export async function GET(
 
         $('article').each((i, el) => {
             const anchor = $(el).find('div.poster > a');
-            const image = $(el).find('div.poster > a > img').attr('src');
+            let image = $(el).find('div.poster > a > img').attr('src');
+
+            // Fix relative images
+            if (image && image.startsWith('/')) {
+                image = `https://animesonlinecc.to${image}`;
+            }
+
             const rating = $(el).find('div.poster > div.rating').text().trim();
             const title = $(el).find('div.data > h3').text().trim();
             const href = anchor.attr('href') || '';

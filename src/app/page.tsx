@@ -365,8 +365,20 @@ export default function Home() {
 
       const cloudFallbacks = tmdbId ? [
         {
-          name: 'Servidor VIP (HD)',
+          name: currentAudio === 'dub' ? 'Servidor Dublado (Fast)' : 'Servidor VIP (PT-BR)',
           slug: 'stable-1',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://embed.warezcdn.com/movie/${tmdbId}`
+              : `https://embed.warezcdn.com/serie/${tmdbId}/${currentSea}/${currentEp}`
+          }]
+        },
+        {
+          name: 'Global Legendado (HD)',
+          slug: 'stable-2',
           has_ads: true,
           is_embed: true,
           episodes: [{
@@ -377,27 +389,15 @@ export default function Home() {
           }]
         },
         {
-          name: 'Servidor Reserva (Fast)',
-          slug: 'stable-2',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
-              : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-          }]
-        },
-        {
-          name: 'Player Alternativo',
+          name: 'Reserva Master',
           slug: 'stable-3',
           has_ads: false,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`
-              : `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&sea=${currentSea}&epi=${currentEp}`
+              ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
+              : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         }
       ] : [];
@@ -469,7 +469,10 @@ export default function Home() {
 
   const proxyUrl = (url: string) => {
     if (!url) return '';
-    if (url.startsWith('/')) return url;
+    if (url.startsWith('/')) {
+      // Se for relativo, assume que é do AnimesOnlineCC que é a fonte principal da busca global
+      return `/api/proxy?url=${encodeURIComponent('https://animesonlinecc.to' + url)}`;
+    }
     if (url.includes('ui-avatars.com')) return url;
     return `/api/proxy?url=${encodeURIComponent(url)}`;
   };
@@ -478,7 +481,7 @@ export default function Home() {
 
   const isEmbed = (url: string) => {
     if (!url) return false;
-    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed'];
+    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn'];
     return embeds.some(e => url.includes(e));
   };
 
@@ -673,9 +676,10 @@ export default function Home() {
                       isEmbed(activeVideo) ? (
                         <iframe
                           src={activeVideo}
-                          className="w-full h-full border-0"
+                          className="w-full h-full border-0 shadow-2xl"
                           allowFullScreen
                           allow="autoplay; fullscreen"
+                          sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
                         />
                       ) : (
                         <video
