@@ -614,22 +614,85 @@ export default function Home() {
     }
   };
 
+  const [trendingAnimes, setTrendingAnimes] = useState<any[]>([]);
+  const [popularAnimes, setPopularAnimes] = useState<any[]>([]);
+  const [dubbedAnimes, setDubbedAnimes] = useState<any[]>([]);
+
+  // Fetch dynamic catalog from Jikan API (MyAnimeList)
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      try {
+        // 1. Trending
+        const resTop = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=15');
+        const dataTop = await resTop.json();
+        const mappedTop = dataTop.data.map((a: any) => ({
+          title: a.title,
+          slug: a.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, ''),
+          tmdbId: '', // Placeholder, will be resolved on click
+          image: a.images.jpg.large_image_url,
+          rating: a.score || '0.0',
+          category: a.genres[0]?.name || 'Anime',
+          status: a.status,
+          description: a.synopsis,
+          type: 'serie'
+        }));
+        setTrendingAnimes(mappedTop);
+
+        // 2. Popular All Time
+        const resPop = await fetch('https://api.jikan.moe/v4/top/anime?limit=15');
+        const dataPop = await resPop.json();
+        setPopularAnimes(dataPop.data.map((a: any) => ({
+          title: a.title,
+          slug: a.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, ''),
+          image: a.images.jpg.large_image_url,
+          rating: a.score || '0.0',
+          category: a.genres[0]?.name || 'Anime',
+          type: 'serie'
+        })));
+
+        // 3. Just for show, use some of INITIAL_CATALOG for Dubbed row
+        setDubbedAnimes(INITIAL_CATALOG.filter(a => a.dubbedAvailable));
+
+      } catch (err) {
+        console.error("Catalog fetch error:", err);
+      }
+    };
+    fetchCatalog();
+  }, []);
+
   const handleSelectAnime = async (anime: any) => {
     setLoading(true);
     setError(null);
     try {
-      // 1. Resolve TMDB ID if missing
+      // 1. Resolve Slugs for Dynamic Animes
+      let realSlug = anime.slug;
+
+      // If it's a dynamic anime (from Jikan API), we should search for the real slug on our provider
+      const searchRes = await fetch(`/api/search/${encodeURIComponent(anime.title)}`);
+      const searchData = await searchRes.json();
+
+      if (searchData.data && searchData.data.length > 0) {
+        // Find exact or closest match
+        const match = searchData.data.find((r: any) =>
+          r.title.toLowerCase().includes(anime.title.toLowerCase()) ||
+          anime.title.toLowerCase().includes(r.title.toLowerCase())
+        );
+        if (match) realSlug = match.slug;
+      }
+
+      // 2. Resolve TMDB ID if missing
       let tmdbId = anime.tmdbId;
       if (!tmdbId) {
         tmdbId = await resolveTmdbId(anime.title);
       }
 
-      // 2. Fetch details for seasons/episodes
-      const res = await fetch(`/api/details/${anime.slug}`);
+      // 3. Fetch details for seasons/episodes
+      const res = await fetch(`/api/details/${realSlug}`);
       const data = await res.json();
 
       const fullAnime = {
         ...anime,
+        slug: realSlug,
         tmdbId,
         seasons: data.ok && data.data?.seasons ? data.data.seasons : [],
         description: data.ok && data.data?.synopsis ? data.data.synopsis : anime.description,
@@ -665,16 +728,11 @@ export default function Home() {
 
   const proxyUrl = (url: string) => {
     if (!url) return '';
-    // Don't proxy trusted image CDNs to avoid server load/blocks
-    if (url.includes('ui-avatars.com')) return url;
-
-    // Relative paths from scrapers need the full base URL and proxy
-    if (url.startsWith('/')) {
-      return `/api/proxy?url=${encodeURIComponent('https://animesonlinecc.to' + url)}`;
-    }
-
-    // Proxy AniList and other external URLs to avoid CORS and Referer blocks
-    return `/api/proxy?url=${encodeURIComponent(url)}`;
+    // Images from Jikan/MAL/AniList usually work fine if we don't send a restricted referrer
+    // But to be 100% sure they show on mobile, we proxy EVERYTHING through the local node server
+    // as it has a clean residential IP (Crateús) which isn't blocked.
+    const LOCAL_SERVER_TUNNEL = 'https://sugoi-br-api.loca.lt';
+    return `${LOCAL_SERVER_TUNNEL}/api/proxy?url=${encodeURIComponent(url)}`;
   };
 
   const getProxyUrl = (url: string) => proxyUrl(url);
@@ -784,103 +842,115 @@ export default function Home() {
           {view === 'catalog' ? (
             <motion.div
               key="catalog"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="p-8 space-y-12"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="pb-20"
             >
-              <section className="relative h-[400px] rounded-[40px] overflow-hidden group">
-                <div className="absolute inset-0">
-                  <img src={proxyUrl(animeList[0].image)} className="w-full h-full object-cover brightness-50" alt="" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
-                </div>
-                <div className="absolute inset-0 p-12 flex flex-col justify-center max-w-2xl">
-                  <div className="flex items-center gap-2 text-primary font-bold mb-4">
-                    <Star className="w-5 h-5 fill-current" />
-                    <span className="tracking-widest uppercase text-xs">Anime em Destaque</span>
-                  </div>
-                  <h1 className="text-6xl font-black mb-6 tracking-tight">{animeList[0].title}</h1>
-                  <p className="text-gray-300 text-lg mb-8 leading-relaxed opacity-90">
-                    Acompanhe a jornada épica em busca do tesouro supremo e torne-se o Rei dos Piratas.
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <button onClick={() => handleSelectAnime(animeList[0])} className="premium-button-primary flex items-center gap-2">
-                      <Play className="w-5 h-5 fill-current" /> Começar Agora
-                    </button>
-                    <button className="premium-button bg-white/10 hover:bg-white/20">Saiba Mais</button>
-                  </div>
-                </div>
+              {/* Netflix Style Hero */}
+              <section className="relative h-[80vh] w-full overflow-hidden">
+                {trendingAnimes.length > 0 && (
+                  <>
+                    <div className="absolute inset-0">
+                      <img
+                        src={proxyUrl(trendingAnimes[0].image)}
+                        className="w-full h-full object-cover scale-105 blur-[2px] opacity-40"
+                        alt=""
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent" />
+                    </div>
+
+                    <div className="absolute inset-0 flex flex-col justify-center px-8 lg:px-16 max-w-3xl z-10">
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">N-series</span>
+                        <span className="text-secondary font-black uppercase text-xs tracking-widest">Trending Now</span>
+                      </div>
+                      <h1 className="text-5xl lg:text-7xl font-black mb-4 tracking-tighter leading-[0.9] drop-shadow-2xl">
+                        {trendingAnimes[0].title}
+                      </h1>
+                      <div className="flex items-center gap-4 mb-6 text-sm font-bold opacity-80">
+                        <span className="text-green-400">98% Match</span>
+                        <span>2024</span>
+                        <span className="border border-white/20 px-2 rounded-sm text-[10px]">16+</span>
+                        <span>{trendingAnimes[0].category}</span>
+                      </div>
+                      <p className="text-gray-300 text-lg mb-8 line-clamp-3 font-medium leading-relaxed drop-shadow-md">
+                        {trendingAnimes[0].description}
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => handleSelectAnime(trendingAnimes[0])} className="bg-white text-black px-8 py-3 rounded font-black flex items-center gap-2 hover:bg-white/90 transition-all text-lg active:scale-95 shadow-xl">
+                          <Play className="w-6 h-6 fill-current" /> Assistir
+                        </button>
+                        <button onClick={() => handleSelectAnime(trendingAnimes[0])} className="bg-white/20 backdrop-blur-md text-white px-8 py-3 rounded font-black flex items-center gap-2 hover:bg-white/30 transition-all text-lg active:scale-95">
+                          <Info className="w-6 h-6" /> Detalhes
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </section>
 
-              {/* Global Search Results from external API */}
-              {searchQuery.length > 2 && globalResults.length > 0 && (
-                <div className="mb-12 animate-in fade-in slide-in-from-top-4 duration-500">
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className="w-1 h-8 bg-primary rounded-full" />
-                    <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
-                      Resultados Globais <span className="text-sm font-normal text-gray-500">({globalResults.length} encontrados)</span>
+              {/* Rows */}
+              <div className="px-8 lg:px-16 -mt-32 relative z-20 space-y-12">
+
+                {/* Global Search Results from external API */}
+                {searchQuery.length > 2 && globalResults.length > 0 && (
+                  <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                    <h2 className="text-2xl font-black tracking-tight mb-6 flex items-center gap-2">
+                      <Search className="w-6 h-6 text-primary" /> Resultados para "{searchQuery}"
                     </h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-4">
+                      {globalResults.map((anime: any) => (
+                        <AnimeCard key={anime.slug} anime={anime} />
+                      ))}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                    {globalResults.map((anime) => (
-                      <div
-                        key={anime.slug}
-                        onClick={() => handleSelectAnime(anime)}
-                        className="anime-card group cursor-pointer"
-                      >
-                        <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-3">
-                          <img
-                            src={proxyUrl(anime.image)}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            alt={anime.title}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                          <div className="absolute top-2 right-2 bg-primary/90 text-black text-[10px] font-black px-2 py-1 rounded-md backdrop-blur-md">
-                            {anime.rating}
-                          </div>
-                        </div>
-                        <h3 className="font-bold text-sm line-clamp-1 group-hover:text-primary transition-colors">{anime.title}</h3>
-                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mt-1">{anime.category}</p>
+                )}
+
+                {/* Trending Row */}
+                <section>
+                  <h2 className="text-xl font-black tracking-tight mb-4 flex items-center gap-2">
+                    Em Alta Hoje <ChevronRight className="w-4 h-4 text-primary" />
+                  </h2>
+                  <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide">
+                    {trendingAnimes.map((anime) => (
+                      <div key={anime.slug} className="min-w-[180px] lg:min-w-[220px]">
+                        <AnimeCard anime={anime} />
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                </section>
 
-              <section>
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-black tracking-tight">Recém Adicionados</h2>
-                  <div className="flex items-center gap-2">
-                    <div className="flex bg-white/5 rounded-lg p-1">
-                      <button className="p-2 text-primary"><LayoutGrid className="w-4 h-4" /></button>
-                      <button className="p-2 text-gray-500"><List className="w-4 h-4" /></button>
-                    </div>
+                {/* Dubbed Row */}
+                <section>
+                  <h2 className="text-xl font-black tracking-tight mb-4 flex items-center gap-2">
+                    Exclusividades Dubladas 🔥 <ChevronRight className="w-4 h-4 text-primary" />
+                  </h2>
+                  <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide">
+                    {dubbedAnimes.map((anime) => (
+                      <div key={anime.slug} className="min-w-[180px] lg:min-w-[220px]">
+                        <AnimeCard anime={anime} />
+                      </div>
+                    ))}
                   </div>
-                </div>
+                </section>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xxl:grid-cols-5 gap-8">
-                  {filteredCatalog.map((anime) => (
-                    <div
-                      key={`${anime.slug}-${anime.mediaId}`}
-                      className="anime-card-v2 group aspect-[2/3]"
-                      onClick={() => handleSelectAnime(anime)}
-                    >
-                      <img src={proxyUrl(anime.image)} alt="" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
-                      <div className="absolute top-4 left-4">
-                        <span className="status-badge bg-primary text-white shadow-lg">{anime.status}</span>
+                {/* Popular Row */}
+                <section>
+                  <h2 className="text-xl font-black tracking-tight mb-4 flex items-center gap-2">
+                    Os Favoritos de Todos os Tempos <ChevronRight className="w-4 h-4 text-primary" />
+                  </h2>
+                  <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide">
+                    {popularAnimes.map((anime) => (
+                      <div key={anime.slug} className="min-w-[180px] lg:min-w-[220px]">
+                        <AnimeCard anime={anime} />
                       </div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <h4 className="font-bold text-lg mb-1 leading-tight group-hover:text-primary transition-colors">{anime.title}</h4>
-                        <div className="flex items-center justify-between text-[11px] text-gray-400">
-                          <span>{anime.category}</span>
-                          <span className="flex items-center gap-1"><Star className="w-3 h-3 text-accent fill-current" /> {anime.rating}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                    ))}
+                  </div>
+                </section>
+
+              </div>
             </motion.div>
           ) : (
             <motion.div
