@@ -348,79 +348,46 @@ export default function Home() {
       let foundData = null;
 
       // Tentar API Local primeiro (Portas 3000 ou 1010)
-      const localPorts = ['3000', '1010'];
+      const localPorts = ['1010', '3000'];
       for (const port of localPorts) {
         try {
-          const localRes = await fetch(`http://localhost:${port}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}`, { mode: 'cors' });
+          const localRes = await fetch(`http://localhost:${port}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`, { mode: 'cors' });
           if (localRes.ok) {
             const localData = await localRes.json();
-            if (!localData.error && localData.data) {
-              foundData = localData.data.map((r: any) => ({ ...r, name: `🏠 LOCAL (${port}) - ${r.name}` }));
+            if (localData.data && localData.data.length > 0) {
+              foundData = localData.data.map((r: any) => ({ ...r, name: `🏠 LOCAL - ${r.name}` }));
               break;
             }
           }
         } catch (e) { }
       }
 
+      // Tentar API Cloud (Netlify)
       if (!foundData) {
         for (const s of slugsToTry) {
           try {
             const res = await fetch(`/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
             const data = await res.json();
-            if (res.status === 200 && !data.error && data.data && data.data.length > 0) {
+            if (data.data && data.data.length > 0) {
               foundData = data.data;
+              // Salvar o tmdbId resolvido pelo backend para futuras buscas
+              if (data.tmdbId && activeAnime && !activeAnime.tmdbId) {
+                setSelectedAnime({ ...activeAnime, tmdbId: data.tmdbId });
+              }
               break;
             }
           } catch (e) { }
         }
       }
 
-      // Servidores Estáveis de Backup (Verificados para 2026)
-      const currentAnime = activeAnime || animeList.find((a: any) => a.slug === baseSlug);
-      const tmdbId = currentAnime?.tmdbId;
-      const isMovie = currentAnime?.type === 'movie';
-
-      const cloudFallbacks = tmdbId ? [
-        {
-          name: 'VIP MASTER Play [BR]',
-          slug: 'stable-1',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}`
-              : `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}&season=${currentSea}&episode=${currentEp}`
-          }]
-        },
-        {
-          name: 'VIP MASTER 4K [BR]',
-          slug: 'stable-2',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://vidsrc.pm/embed/movie/${tmdbId}`
-              : `https://vidsrc.pm/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-          }]
-        }
-      ] : [];
-      // Build trigger: $(new Date().getTime()) 
-
-      if (foundData) {
-        setResults([...foundData, ...cloudFallbacks]);
-        const first = foundData.find((r: any) => r.episodes[0] && !r.episodes[0].error);
+      if (foundData && foundData.length > 0) {
+        setResults(foundData);
+        const first = foundData.find((r: any) => r.episodes[0] && !r.episodes[0].error && r.episodes[0].episode);
         if (first) setActiveVideo(first.episodes[0].episode);
-        else if (cloudFallbacks.length > 0) setActiveVideo(cloudFallbacks[0].episodes[0].episode);
+        else setActiveVideo(foundData[0].episodes[0].episode);
       } else {
-        if (cloudFallbacks.length > 0) {
-          setResults(cloudFallbacks);
-          setActiveVideo(cloudFallbacks[0].episodes[0].episode);
-        } else {
-          setError(currentAudio === 'dub' ? 'Versão dublada não encontrada.' : 'Episódio não encontrado.');
-          setResults([]);
-        }
+        setError(currentAudio === 'dub' ? 'Versão dublada não encontrada.' : 'Episódio não encontrado.');
+        setResults([]);
       }
     } catch (err) {
       setError('Erro de conexão.');
