@@ -338,47 +338,61 @@ export default function Home() {
         }
       }
 
+      // Servidores Estáveis de Backup (Sempre disponíveis para o usuário)
+      const currentAnime = selectedAnime || animeList.find((a: any) => a.slug === baseSlug);
+      const tmdbId = currentAnime?.tmdbId;
+      const isMovie = currentAnime?.type === 'movie';
+
+      const cloudFallbacks = tmdbId ? [
+        {
+          name: 'Servidor VIP (HD)',
+          slug: 'stable-1',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://vidsrc.to/embed/movie/${tmdbId}`
+              : `https://vidsrc.to/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+          }]
+        },
+        {
+          name: 'Servidor Reserva (Fast)',
+          slug: 'stable-2',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
+              : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+          }]
+        },
+        {
+          name: 'Player Alternativo',
+          slug: 'stable-3',
+          has_ads: false,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`
+              : `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&sea=${currentSea}&epi=${currentEp}`
+          }]
+        }
+      ] : [];
+
       if (foundData) {
-        setResults(foundData);
+        setResults([...foundData, ...cloudFallbacks]);
         const first = foundData.find((r: any) => r.episodes[0] && !r.episodes[0].error);
         if (first) setActiveVideo(first.episodes[0].episode);
+        else if (cloudFallbacks.length > 0) setActiveVideo(cloudFallbacks[0].episodes[0].episode);
       } else {
-        // FALLBACK: Se os scrapers falharem (Bloqueio Netlify), usa os Players Estáveis por ID
-        const currentAnime = selectedAnime || animeList.find((a: any) => a.slug === baseSlug);
-        if (currentAnime?.tmdbId) {
-          const tmdbId = currentAnime.tmdbId;
-          const isMovie = currentAnime.type === 'movie';
-          const cloudResults = [
-            {
-              name: 'Servidor Global 1 (HD)',
-              slug: 'stable-1',
-              has_ads: true,
-              is_embed: true,
-              episodes: [{
-                error: false,
-                episode: isMovie
-                  ? `https://vidsrc.to/embed/movie/${tmdbId}`
-                  : `https://vidsrc.to/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-              }]
-            },
-            {
-              name: 'Servidor Global 2 (Bypass)',
-              slug: 'stable-2',
-              has_ads: false,
-              is_embed: true,
-              episodes: [{
-                error: false,
-                episode: isMovie
-                  ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
-                  : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-              }]
-            }
-          ];
-          setResults(cloudResults);
-          setActiveVideo(cloudResults[0].episodes[0].episode);
+        if (cloudFallbacks.length > 0) {
+          setResults(cloudFallbacks);
+          setActiveVideo(cloudFallbacks[0].episodes[0].episode);
         } else {
-          if (currentAudio === 'dub') setError('Versão dublada não encontrada.');
-          else setError('Episódio não encontrado.');
+          setError(currentAudio === 'dub' ? 'Versão dublada não encontrada.' : 'Episódio não encontrado.');
           setResults([]);
         }
       }
