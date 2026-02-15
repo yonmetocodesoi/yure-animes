@@ -470,9 +470,10 @@ export default function Home() {
   const proxyUrl = (url: string) => {
     if (!url) return '';
     if (url.startsWith('/')) {
-      // Se for relativo, assume que é do AnimesOnlineCC que é a fonte principal da busca global
       return `/api/proxy?url=${encodeURIComponent('https://animesonlinecc.to' + url)}`;
     }
+    // AniList images are usually safe to load directly and this avoids proxy overhead/errors
+    if (url.includes('anilist.co')) return url;
     if (url.includes('ui-avatars.com')) return url;
     return `/api/proxy?url=${encodeURIComponent(url)}`;
   };
@@ -481,7 +482,7 @@ export default function Home() {
 
   const isEmbed = (url: string) => {
     if (!url) return false;
-    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn'];
+    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed'];
     return embeds.some(e => url.includes(e));
   };
 
@@ -684,7 +685,7 @@ export default function Home() {
                       ) : (
                         <video
                           key={activeVideo}
-                          src={getProxyUrl(activeVideo)}
+                          src={proxyUrl(activeVideo)}
                           controls
                           autoPlay
                           className="w-full h-full"
