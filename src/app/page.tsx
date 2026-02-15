@@ -365,44 +365,20 @@ export default function Home() {
 
       const cloudFallbacks = tmdbId ? [
         {
-          name: 'Servidor VIP (PT-BR)',
+          name: 'Servidor Dublado (BR)',
           slug: 'stable-1',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://vidsrc.icu/embed/movie/${tmdbId}`
-              : `https://vidsrc.icu/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://player.duckdns.org/movie/${tmdbId}`
+              : `https://player.duckdns.org/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         },
         {
-          name: 'Servidor Anime Fast',
+          name: 'Servidor VIP 2',
           slug: 'stable-2',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://vidsrc.net/embed/movie/${tmdbId}`
-              : `https://vidsrc.net/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-          }]
-        },
-        {
-          name: 'Global Play (HD)',
-          slug: 'stable-3',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://vidsrc.pm/embed/movie/${tmdbId}`
-              : `https://vidsrc.pm/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-          }]
-        },
-        {
-          name: 'Servidor Dublado (BR)',
-          slug: 'stable-4',
           has_ads: true,
           is_embed: true,
           episodes: [{
@@ -412,6 +388,19 @@ export default function Home() {
               : `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}&season=${currentSea}&episode=${currentEp}`
           }]
         },
+        {
+          name: 'Global Fast',
+          slug: 'stable-3',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://vidsrc.net/embed/movie/${tmdbId}`
+              : `https://vidsrc.net/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+          }]
+        }
+        ,
         {
           name: 'Reserva Master',
           slug: 'stable-5',
@@ -703,7 +692,7 @@ export default function Home() {
                           className="w-full h-full border-0 shadow-2xl"
                           allowFullScreen
                           allow="autoplay; fullscreen"
-                          sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts"
+                          sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
                         />
                       ) : (
                         <video
