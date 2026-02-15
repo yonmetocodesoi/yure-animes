@@ -349,13 +349,13 @@ export default function Home() {
 
       // 1. Tentar o Servidor Local (PC) - Prioridade para o celular acessar
       try {
-        const LOCAL_SERVER = 'https://yure-anime-api.loca.lt'; // Seu túnel persistente
+        const LOCAL_SERVER = 'https://corded-stud.trycloudflare.com'; // Túnel Cloudflare (estável)
         for (const s of slugsToTry) {
           const localRes = await fetch(`${LOCAL_SERVER}/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
           if (localRes.ok) {
             const localData = await localRes.json();
             if (localData.data && localData.data.length > 0) {
-              foundData = localData.data.map((r: any) => ({ ...r, name: `PC Local (Túnel) - ${r.name}` }));
+              foundData = localData.data.map((r: any) => ({ ...r, name: `VIP MASTER BR - ${r.name}` }));
               if (localData.tmdbId && activeAnime && !activeAnime.tmdbId) {
                 setSelectedAnime({ ...activeAnime, tmdbId: localData.tmdbId });
               }
