@@ -365,20 +365,32 @@ export default function Home() {
 
       const cloudFallbacks = tmdbId ? [
         {
-          name: currentAudio === 'dub' ? 'Servidor Dublado (Fast)' : 'Servidor VIP (PT-BR)',
+          name: currentAudio === 'dub' ? 'Servidor Dublado 1 (VIP)' : 'Servidor PT-BR 1',
           slug: 'stable-1',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://embed.warezcdn.com/movie/${tmdbId}`
-              : `https://embed.warezcdn.com/serie/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://superflixapi.top/filme/${tmdbId}`
+              : `https://superflixapi.top/serie/${tmdbId}/${currentSea}/${currentEp}`
+          }]
+        },
+        {
+          name: 'Servidor Dublado 2 (Fast)',
+          slug: 'stable-2',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://autoembed.to/movie/tmdb/${tmdbId}?server=1`
+              : `https://autoembed.to/tv/tmdb/${tmdbId}-${currentSea}-${currentEp}?server=1`
           }]
         },
         {
           name: 'Global Legendado (HD)',
-          slug: 'stable-2',
+          slug: 'stable-3',
           has_ads: true,
           is_embed: true,
           episodes: [{
@@ -386,18 +398,6 @@ export default function Home() {
             episode: isMovie
               ? `https://vidsrc.to/embed/movie/${tmdbId}`
               : `https://vidsrc.to/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-          }]
-        },
-        {
-          name: 'Reserva Master',
-          slug: 'stable-3',
-          has_ads: false,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
-              : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         }
       ] : [];
@@ -679,7 +679,7 @@ export default function Home() {
                           className="w-full h-full border-0 shadow-2xl"
                           allowFullScreen
                           allow="autoplay; fullscreen"
-                          sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
+                          sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts"
                         />
                       ) : (
                         <video
