@@ -316,10 +316,11 @@ export default function Home() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  const fetchEpisode = async (animeSlug?: string, epNum?: string, seaNum?: string, audioType?: 'sub' | 'dub') => {
+  const fetchEpisode = async (animeSlug?: string, epNum?: string, seaNum?: string, audioType?: 'sub' | 'dub', currentSelected?: any) => {
     let baseSlug = animeSlug || selectedAnime?.slug;
     if (baseSlug?.endsWith('-dublado')) baseSlug = baseSlug.replace('-dublado', '');
 
+    const activeAnime = currentSelected || selectedAnime;
     const currentEp = epNum || episode;
     const currentSea = seaNum || season;
     const currentAudio = audioType || audio;
@@ -334,7 +335,7 @@ export default function Home() {
     let slugsToTry: string[] = [];
 
     if (currentAudio === 'dub') {
-      const explicitDubSlug = selectedAnime?.dubSlug || animeList.find((a: any) => a.slug === baseSlug)?.dubSlug;
+      const explicitDubSlug = activeAnime?.dubSlug || animeList.find((a: any) => a.slug === baseSlug)?.dubSlug;
       if (explicitDubSlug) slugsToTry.push(explicitDubSlug);
 
       slugsToTry.push(`${baseSlug}-dublado`);
@@ -350,7 +351,7 @@ export default function Home() {
       const localPorts = ['3000', '1010'];
       for (const port of localPorts) {
         try {
-          const localRes = await fetch(`http://localhost:${port}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${selectedAnime?.tmdbId || ''}`, { mode: 'cors' });
+          const localRes = await fetch(`http://localhost:${port}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}`, { mode: 'cors' });
           if (localRes.ok) {
             const localData = await localRes.json();
             if (!localData.error && localData.data) {
@@ -364,7 +365,7 @@ export default function Home() {
       if (!foundData) {
         for (const s of slugsToTry) {
           try {
-            const res = await fetch(`/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${selectedAnime?.tmdbId || ''}&type=${selectedAnime?.type || 'serie'}`);
+            const res = await fetch(`/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
             const data = await res.json();
             if (res.status === 200 && !data.error && data.data && data.data.length > 0) {
               foundData = data.data;
@@ -375,7 +376,7 @@ export default function Home() {
       }
 
       // Servidores Estáveis de Backup (Verificados para 2026)
-      const currentAnime = selectedAnime || animeList.find((a: any) => a.slug === baseSlug);
+      const currentAnime = activeAnime || animeList.find((a: any) => a.slug === baseSlug);
       const tmdbId = currentAnime?.tmdbId;
       const isMovie = currentAnime?.type === 'movie';
 
@@ -429,46 +430,78 @@ export default function Home() {
     }
   };
 
+  const resolveTmdbId = async (title: string) => {
+    try {
+      const query = `
+        query ($search: String) {
+          Media(search: $search, type: ANIME) {
+            id
+            idMal
+            idTales
+            title { english romaji }
+          }
+        }
+      `;
+      const response = await fetch('https://graphql.anilist.co', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables: { search: title } })
+      });
+      const data = await response.json();
+      const media = data.data?.Media;
+      if (media?.idMal) return media.idMal.toString(); // Usar ID do MyAnimeList como fallback pro TMDB em muitos players
+      return null;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const handleSelectAnime = async (anime: any) => {
-    // Se o anime já tem tmdbId ou slug interno, vai pro fluxo normal
-    if (anime.mediaId || anime.tmdbId) {
+    setLoading(true);
+    setError(null);
+    try {
+      // 1. Resolve TMDB ID if missing
+      let tmdbId = anime.tmdbId;
+      if (!tmdbId) {
+        tmdbId = await resolveTmdbId(anime.title);
+      }
+
+      // 2. Fetch details for seasons/episodes
+      const res = await fetch(`/api/details/${anime.slug}`);
+      const data = await res.json();
+
+      const fullAnime = {
+        ...anime,
+        tmdbId,
+        seasons: data.ok && data.data?.seasons ? data.data.seasons : [],
+        description: data.ok && data.data?.synopsis ? data.data.synopsis : anime.description,
+        isGlobal: true
+      };
+
+      setSelectedAnime(fullAnime);
+      setSeason('1');
+      setEpisode('1');
+      setView('watch');
+
+      // 3. Fetch first episode
+      const firstSeason = fullAnime.seasons[0];
+      const firstEp = firstSeason?.episodes[0];
+
+      if (firstEp) {
+        fetchEpisode(firstEp.slug, '1', '1', 'sub', fullAnime);
+      } else {
+        fetchEpisode(anime.slug, '1', '1', 'sub', fullAnime);
+      }
+    } catch (err) {
+      console.error("Selection error:", err);
+      // Fallback simple select
       setSelectedAnime(anime);
       setSeason('1');
       setEpisode('1');
-      setAudio('sub');
       setView('watch');
-      fetchEpisode(anime.slug, '1', '1', 'sub');
-    } else {
-      // Anime vindo da busca global (Animes Online CC)
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/details/${anime.slug}`);
-        const data = await res.json();
-        if (!data.error) {
-          const fullAnime = {
-            ...anime,
-            seasons: data.data.seasons,
-            description: data.data.synopsis,
-            isGlobal: true
-          };
-          setSelectedAnime(fullAnime);
-          setSeason('1');
-          setEpisode('1');
-          setView('watch');
-
-          // Pegar o primeiro episódio real do primeiro item da season
-          const firstSeason = data.data.seasons[0];
-          const firstEp = firstSeason.episodes[0];
-          fetchEpisode(firstEp.slug, '1', '1', 'sub');
-        } else {
-          setError("Não foi possível carregar os detalhes deste anime.");
-        }
-      } catch (err) {
-        setError("Erro ao conectar com o servidor de busca.");
-      } finally {
-        setLoading(false);
-      }
+      fetchEpisode(anime.slug, '1', '1', 'sub', anime);
+    } finally {
+      setLoading(false);
     }
   };
 
