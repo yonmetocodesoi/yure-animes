@@ -17,10 +17,26 @@ export async function GET(
     const { query } = params;
 
     try {
+        const LOCAL_SERVER = 'https://sugoi-br-api.loca.lt';
+
+        // 1. Tentar servidor local (Bypass 403 do Netlify)
+        try {
+            const localRes = await axios.get(`${LOCAL_SERVER}/api/search/${encodeURIComponent(query)}`, {
+                headers: { 'Bypass-Tunnel-Reminder': 'true' },
+                timeout: 5000
+            });
+            if (localRes.data && !localRes.data.error) {
+                return NextResponse.json(localRes.data);
+            }
+        } catch (e) {
+            console.log("Local search failed, trying direct...");
+        }
+
+        // 2. Fallback direta (pode falhar no Netlify)
         const url = `https://animesonlinecc.to/search/${encodeURIComponent(query)}/`;
         const response = await axios.get(url, {
             headers: GHOST_HEADERS,
-            timeout: 8000
+            timeout: 5000
         });
 
         const $ = cheerio.load(response.data);
@@ -30,7 +46,6 @@ export async function GET(
             const anchor = $(el).find('div.poster > a');
             let image = $(el).find('div.poster > a > img').attr('src');
 
-            // Fix relative images
             if (image && image.startsWith('/')) {
                 image = `https://animesonlinecc.to${image}`;
             }
@@ -45,7 +60,7 @@ export async function GET(
                     title,
                     slug,
                     image,
-                    rating: rating || '0.0',
+                    rating: rating || '10.0',
                     category: 'Anime',
                     status: 'Online',
                     description: 'Resultado da busca global.',

@@ -17,10 +17,25 @@ export async function GET(
     const { id } = params;
 
     try {
+        const LOCAL_SERVER = 'https://sugoi-br-api.loca.lt';
+
+        // 1. Tentar servidor local
+        try {
+            const localRes = await axios.get(`${LOCAL_SERVER}/api/details/${id}`, {
+                headers: { 'Bypass-Tunnel-Reminder': 'true' },
+                timeout: 5000
+            });
+            if (localRes.data && !localRes.data.error) {
+                return NextResponse.json(localRes.data);
+            }
+        } catch (e) {
+            console.log("Local details failed, trying direct...");
+        }
+
         const url = `https://animesonlinecc.to/anime/${id}`;
         const response = await axios.get(url, {
             headers: GHOST_HEADERS,
-            timeout: 8000
+            timeout: 5000
         });
 
         const $ = cheerio.load(response.data);

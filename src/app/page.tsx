@@ -469,10 +469,7 @@ export default function Home() {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.length > 2) {
         try {
-          const LOCAL_SERVER_TUNNEL = 'https://sugoi-br-api.loca.lt';
-          const res = await fetch(`${LOCAL_SERVER_TUNNEL}/api/search/${encodeURIComponent(searchQuery)}`, {
-            headers: { 'Bypass-Tunnel-Reminder': 'true' }
-          });
+          const res = await fetch(`/api/search/${encodeURIComponent(searchQuery)}`);
           const data = await res.json();
           if (!data.error) setGlobalResults(data.data);
         } catch (e) {
@@ -669,16 +666,12 @@ export default function Home() {
     try {
       // 1. Resolve Slugs for Dynamic Animes
       let realSlug = anime.slug;
-      const LOCAL_SERVER_TUNNEL = 'https://sugoi-br-api.loca.lt';
 
-      // If it's a dynamic anime (from Jikan API), we should search for the real slug on our provider
-      const searchRes = await fetch(`${LOCAL_SERVER_TUNNEL}/api/search/${encodeURIComponent(anime.title)}`, {
-        headers: { 'Bypass-Tunnel-Reminder': 'true' }
-      });
+      // Try resolving via search
+      const searchRes = await fetch(`/api/search/${encodeURIComponent(anime.title)}`);
       const searchData = await searchRes.json();
 
       if (searchData.data && searchData.data.length > 0) {
-        // Find exact or closest match
         const match = searchData.data.find((r: any) =>
           r.title.toLowerCase().includes(anime.title.toLowerCase()) ||
           anime.title.toLowerCase().includes(r.title.toLowerCase())
@@ -693,9 +686,7 @@ export default function Home() {
       }
 
       // 3. Fetch details for seasons/episodes
-      const res = await fetch(`${LOCAL_SERVER_TUNNEL}/api/details/${realSlug}`, {
-        headers: { 'Bypass-Tunnel-Reminder': 'true' }
-      });
+      const res = await fetch(`/api/details/${realSlug}`);
       const data = await res.json();
 
       const fullAnime = {
@@ -735,18 +726,15 @@ export default function Home() {
   };
 
   const proxyUrl = (url: string) => {
-    if (!url) return '';
-    // Most anime image CDNs block weserv or our tunnel. 
-    // Best to try loading them directly first, and only use proxy if it's a relative path.
-    if (url.startsWith('http')) return url;
+    if (!url) return 'https://placehold.co/400x600/1a1a1a/ffffff?text=No+Image';
 
-    // Relative paths from scrapers need the full base URL and proxy
-    if (url.startsWith('/')) {
-      const LOCAL_SERVER_TUNNEL = 'https://sugoi-br-api.loca.lt';
-      return `${LOCAL_SERVER_TUNNEL}/api/proxy?url=${encodeURIComponent('https://animesonlinecc.to' + url)}`;
+    // AniList and MyAnimeList images usually work fine directly if the user is on mobile/browser
+    if (url.includes('anilist.co') || url.includes('myanimelist.net') || url.includes('jikan.moe')) {
+      return url;
     }
 
-    return url;
+    // Use weserv for everything else (like scraper images)
+    return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp`;
   };
 
   const getProxyUrl = (url: string) => proxyUrl(url);
