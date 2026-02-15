@@ -377,15 +377,15 @@ export default function Home() {
           }]
         },
         {
-          name: 'VIP MASTER Superflix [BR]',
+          name: 'VIP MASTER Turbo [BR]',
           slug: 'stable-2',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://superflixapi.top/filme/${tmdbId}`
-              : `https://superflixapi.top/serie/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://vidsrc.icu/embed/movie/${tmdbId}`
+              : `https://vidsrc.icu/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         },
         {
@@ -408,8 +408,8 @@ export default function Home() {
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
-              : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://vidsrc.net/embed/movie/${tmdbId}`
+              : `https://vidsrc.net/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         }
       ] : []; // Build trigger: $(new Date().getTime()) 
@@ -493,7 +493,7 @@ export default function Home() {
 
   const isEmbed = (url: string) => {
     if (!url) return false;
-    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed', 'smashy', 'superflixapi'];
+    const embeds = ['iframe', 'animesonline', 'blogger', 'google', 'youtube', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed', 'smashy', 'gogo', 'anime', '.co', '.net', '.icu', '.xyz', '.me', '.pm'];
     return embeds.some(e => url.includes(e));
   };
 
