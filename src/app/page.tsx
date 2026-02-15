@@ -470,7 +470,9 @@ export default function Home() {
       if (searchQuery.length > 2) {
         try {
           const LOCAL_SERVER_TUNNEL = 'https://sugoi-br-api.loca.lt';
-          const res = await fetch(`${LOCAL_SERVER_TUNNEL}/api/search/${encodeURIComponent(searchQuery)}`);
+          const res = await fetch(`${LOCAL_SERVER_TUNNEL}/api/search/${encodeURIComponent(searchQuery)}`, {
+            headers: { 'Bypass-Tunnel-Reminder': 'true' }
+          });
           const data = await res.json();
           if (!data.error) setGlobalResults(data.data);
         } catch (e) {
@@ -670,7 +672,9 @@ export default function Home() {
       const LOCAL_SERVER_TUNNEL = 'https://sugoi-br-api.loca.lt';
 
       // If it's a dynamic anime (from Jikan API), we should search for the real slug on our provider
-      const searchRes = await fetch(`${LOCAL_SERVER_TUNNEL}/api/search/${encodeURIComponent(anime.title)}`);
+      const searchRes = await fetch(`${LOCAL_SERVER_TUNNEL}/api/search/${encodeURIComponent(anime.title)}`, {
+        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+      });
       const searchData = await searchRes.json();
 
       if (searchData.data && searchData.data.length > 0) {
@@ -689,7 +693,9 @@ export default function Home() {
       }
 
       // 3. Fetch details for seasons/episodes
-      const res = await fetch(`${LOCAL_SERVER_TUNNEL}/api/details/${realSlug}`);
+      const res = await fetch(`${LOCAL_SERVER_TUNNEL}/api/details/${realSlug}`, {
+        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+      });
       const data = await res.json();
 
       const fullAnime = {
@@ -730,10 +736,17 @@ export default function Home() {
 
   const proxyUrl = (url: string) => {
     if (!url) return '';
-    // Use images.weserv.nl for reliable global image proxying
-    // It's much faster than our home internet tunnel for images
-    const cleanUrl = url.replace(/^https?:\/\//, '');
-    return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp`;
+    // Most anime image CDNs block weserv or our tunnel. 
+    // Best to try loading them directly first, and only use proxy if it's a relative path.
+    if (url.startsWith('http')) return url;
+
+    // Relative paths from scrapers need the full base URL and proxy
+    if (url.startsWith('/')) {
+      const LOCAL_SERVER_TUNNEL = 'https://sugoi-br-api.loca.lt';
+      return `${LOCAL_SERVER_TUNNEL}/api/proxy?url=${encodeURIComponent('https://animesonlinecc.to' + url)}`;
+    }
+
+    return url;
   };
 
   const getProxyUrl = (url: string) => proxyUrl(url);
