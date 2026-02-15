@@ -469,7 +469,8 @@ export default function Home() {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.length > 2) {
         try {
-          const res = await fetch(`/api/search/${encodeURIComponent(searchQuery)}`);
+          const LOCAL_SERVER_TUNNEL = 'https://sugoi-br-api.loca.lt';
+          const res = await fetch(`${LOCAL_SERVER_TUNNEL}/api/search/${encodeURIComponent(searchQuery)}`);
           const data = await res.json();
           if (!data.error) setGlobalResults(data.data);
         } catch (e) {
@@ -666,9 +667,10 @@ export default function Home() {
     try {
       // 1. Resolve Slugs for Dynamic Animes
       let realSlug = anime.slug;
+      const LOCAL_SERVER_TUNNEL = 'https://sugoi-br-api.loca.lt';
 
       // If it's a dynamic anime (from Jikan API), we should search for the real slug on our provider
-      const searchRes = await fetch(`/api/search/${encodeURIComponent(anime.title)}`);
+      const searchRes = await fetch(`${LOCAL_SERVER_TUNNEL}/api/search/${encodeURIComponent(anime.title)}`);
       const searchData = await searchRes.json();
 
       if (searchData.data && searchData.data.length > 0) {
@@ -687,7 +689,7 @@ export default function Home() {
       }
 
       // 3. Fetch details for seasons/episodes
-      const res = await fetch(`/api/details/${realSlug}`);
+      const res = await fetch(`${LOCAL_SERVER_TUNNEL}/api/details/${realSlug}`);
       const data = await res.json();
 
       const fullAnime = {
@@ -728,11 +730,10 @@ export default function Home() {
 
   const proxyUrl = (url: string) => {
     if (!url) return '';
-    // Images from Jikan/MAL/AniList usually work fine if we don't send a restricted referrer
-    // But to be 100% sure they show on mobile, we proxy EVERYTHING through the local node server
-    // as it has a clean residential IP (Crateús) which isn't blocked.
-    const LOCAL_SERVER_TUNNEL = 'https://sugoi-br-api.loca.lt';
-    return `${LOCAL_SERVER_TUNNEL}/api/proxy?url=${encodeURIComponent(url)}`;
+    // Use images.weserv.nl for reliable global image proxying
+    // It's much faster than our home internet tunnel for images
+    const cleanUrl = url.replace(/^https?:\/\//, '');
+    return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp`;
   };
 
   const getProxyUrl = (url: string) => proxyUrl(url);
