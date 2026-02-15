@@ -620,6 +620,11 @@ export default function Home() {
 
   // Fetch dynamic catalog from AniList (GraphQL) - Better quality images and integrated data
   useEffect(() => {
+    // 1. Initial Load from local data to ensure it's not empty
+    setTrendingAnimes(INITIAL_CATALOG.slice(0, 10));
+    setPopularAnimes(INITIAL_CATALOG.slice(10, 20));
+    setDubbedAnimes(INITIAL_CATALOG.filter(a => a.dubbedAvailable));
+
     const fetchCatalog = async () => {
       const query = `
         query {
@@ -664,8 +669,13 @@ export default function Home() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query })
         });
+
+        if (!response.ok) throw new Error("AniList request failed");
+
         const result = await response.json();
         const data = result.data;
+
+        if (!data || !data.trending || !data.popular) return;
 
         const mapAniList = (list: any[]) => list.map(a => ({
           title: a.title.english || a.title.romaji,
@@ -679,15 +689,17 @@ export default function Home() {
           type: 'serie'
         }));
 
-        setTrendingAnimes(mapAniList(data.trending.media));
-        setPopularAnimes(mapAniList(data.popular.media));
+        const mappedTrending = mapAniList(data.trending.media);
+        if (mappedTrending.length > 0) setTrendingAnimes(mappedTrending);
 
-        // Use a mix of static known-dubbed and high-rated from AniList
-        const dubbedFromAniList = mapAniList(data.dubbed.media);
+        const mappedPopular = mapAniList(data.popular.media);
+        if (mappedPopular.length > 0) setPopularAnimes(mappedPopular);
+
+        const dubbedFromAniList = data.dubbed ? mapAniList(data.dubbed.media) : [];
         setDubbedAnimes([...INITIAL_CATALOG.filter(a => a.dubbedAvailable), ...dubbedFromAniList].slice(0, 15));
 
       } catch (err) {
-        console.error("AniList Fetch Error:", err);
+        console.error("AniList Fetch Error - Staying with local fallback:", err);
       }
     };
     fetchCatalog();
