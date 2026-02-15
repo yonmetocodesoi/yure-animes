@@ -288,6 +288,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<any[]>([]);
+  const [globalResults, setGlobalResults] = useState<any[]>([]);
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -295,6 +296,25 @@ export default function Home() {
     animeList.filter(a => a.title.toLowerCase().includes(searchQuery.toLowerCase())),
     [searchQuery, animeList]
   );
+
+  // Global search effect
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.length > 2) {
+        try {
+          const res = await fetch(`/api/search/${encodeURIComponent(searchQuery)}`);
+          const data = await res.json();
+          if (!data.error) setGlobalResults(data.data);
+        } catch (e) {
+          console.error("Global search failed", e);
+        }
+      } else {
+        setGlobalResults([]);
+      }
+    }, 800);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   const fetchEpisode = async (animeSlug?: string, epNum?: string, seaNum?: string, audioType?: 'sub' | 'dub') => {
     let baseSlug = animeSlug || selectedAnime?.slug;
@@ -404,13 +424,47 @@ export default function Home() {
     }
   };
 
-  const handleSelectAnime = (anime: any) => {
-    setSelectedAnime(anime);
-    setSeason('1');
-    setEpisode('1');
-    setAudio('sub');
-    setView('watch');
-    fetchEpisode(anime.slug, '1', '1', 'sub');
+  const handleSelectAnime = async (anime: any) => {
+    // Se o anime já tem tmdbId ou slug interno, vai pro fluxo normal
+    if (anime.mediaId || anime.tmdbId) {
+      setSelectedAnime(anime);
+      setSeason('1');
+      setEpisode('1');
+      setAudio('sub');
+      setView('watch');
+      fetchEpisode(anime.slug, '1', '1', 'sub');
+    } else {
+      // Anime vindo da busca global (Animes Online CC)
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/details/${anime.slug}`);
+        const data = await res.json();
+        if (!data.error) {
+          const fullAnime = {
+            ...anime,
+            seasons: data.data.seasons,
+            description: data.data.synopsis,
+            isGlobal: true
+          };
+          setSelectedAnime(fullAnime);
+          setSeason('1');
+          setEpisode('1');
+          setView('watch');
+
+          // Pegar o primeiro episódio real do primeiro item da season
+          const firstSeason = data.data.seasons[0];
+          const firstEp = firstSeason.episodes[0];
+          fetchEpisode(firstEp.slug, '1', '1', 'sub');
+        } else {
+          setError("Não foi possível carregar os detalhes deste anime.");
+        }
+      } catch (err) {
+        setError("Erro ao conectar com o servidor de busca.");
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const proxyUrl = (url: string) => {
@@ -518,6 +572,41 @@ export default function Home() {
                   </div>
                 </div>
               </section>
+
+              {/* Global Search Results from external API */}
+              {searchQuery.length > 2 && globalResults.length > 0 && (
+                <div className="mb-12 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-1 h-8 bg-primary rounded-full" />
+                    <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
+                      Resultados Globais <span className="text-sm font-normal text-gray-500">({globalResults.length} encontrados)</span>
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                    {globalResults.map((anime) => (
+                      <div
+                        key={anime.slug}
+                        onClick={() => handleSelectAnime(anime)}
+                        className="anime-card group cursor-pointer"
+                      >
+                        <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-3">
+                          <img
+                            src={proxyUrl(anime.image)}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            alt={anime.title}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute top-2 right-2 bg-primary/90 text-black text-[10px] font-black px-2 py-1 rounded-md backdrop-blur-md">
+                            {anime.rating}
+                          </div>
+                        </div>
+                        <h3 className="font-bold text-sm line-clamp-1 group-hover:text-primary transition-colors">{anime.title}</h3>
+                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mt-1">{anime.category}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <section>
                 <div className="flex items-center justify-between mb-8">

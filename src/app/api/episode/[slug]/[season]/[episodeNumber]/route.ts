@@ -10,13 +10,6 @@ const GHOST_HEADERS = {
     'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
     'Cache-Control': 'no-cache',
     'Pragma': 'no-cache',
-    'Sec-Ch-Ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
-    'Sec-Ch-Ua-Mobile': '?0',
-    'Sec-Ch-Ua-Platform': '"Windows"',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'none',
-    'Sec-Fetch-User': '?1',
     'Upgrade-Insecure-Requests': '1'
 };
 
@@ -30,10 +23,9 @@ async function searchAnimeFire(slug: string, season: string, episode: string) {
                     ...GHOST_HEADERS,
                     'Referer': `${domain}/`
                 },
-                timeout: 5000 // Timeout curto para não travar a função da Netlify
+                timeout: 5000
             });
 
-            // Se retornar JSON direto (comum no AnimeFire novo)
             if (response.data && response.data.data && Array.isArray(response.data.data)) {
                 return { error: false, searched_endpoint: url, episode: response.data.data[0].src };
             }
@@ -52,32 +44,46 @@ async function searchAnimeFire(slug: string, season: string, episode: string) {
 }
 
 async function searchAnimesOnlineCC(slug: string, season: string, episode: string) {
-    const url = `https://animesonlinecc.to/episodio/${slug}-episodio-${episode}`;
-    try {
-        const response = await axios.get(url, {
-            headers: GHOST_HEADERS,
-            timeout: 5000
-        });
+    // Try multiple patterns
+    const urls = [
+        `https://animesonlinecc.to/episodio/${slug}-episodio-${episode}`,
+        `https://animesonlinecc.to/episodio/${slug}`, // Generic slug
+        `https://animesonlinecc.to/filme/${slug}`
+    ];
 
-        const $ = cheerio.load(response.data);
-        const iframeSrc = $('iframe').attr('src');
-
-        if (iframeSrc) {
-            // Se for um link relativo do próprio site
-            const finalIframe = iframeSrc.startsWith('//') ? `https:${iframeSrc}` : iframeSrc;
-            return { error: false, searched_endpoint: url, episode: finalIframe };
-        }
-    } catch (e: any) {
-        // Tentar modo filme se falhar modo episódio
+    for (const url of urls) {
         try {
-            const movieUrl = `https://animesonlinecc.to/filme/${slug}`;
-            const movieRes = await axios.get(movieUrl, { headers: GHOST_HEADERS, timeout: 4000 });
-            const $m = cheerio.load(movieRes.data);
-            const mIframe = $m('iframe').attr('src');
-            if (mIframe) return { error: false, searched_endpoint: movieUrl, episode: mIframe };
-        } catch (err) { }
+            const response = await axios.get(url, {
+                headers: GHOST_HEADERS,
+                timeout: 5000
+            });
+
+            const $ = cheerio.load(response.data);
+
+            // Logic inspired by the provided API: look for metaframe rptss
+            const iframes: string[] = [];
+            $('iframe.metaframe.rptss').each((i, el) => {
+                const src = $(el).attr('src');
+                if (src) iframes.push(src.startsWith('//') ? `https:${src}` : src);
+            });
+
+            if (iframes.length > 0) {
+                // If there are multiple, usually [0] is dubbed and [1] is sub, or vice versa
+                // We'll return the one that likely matches or just the primary one
+                return { error: false, searched_endpoint: url, episode: iframes[iframes.length > 1 ? 1 : 0], all_options: iframes };
+            }
+
+            // Fallback to any iframe if special one not found
+            const anyIframe = $('iframe').attr('src');
+            if (anyIframe) {
+                const final = anyIframe.startsWith('//') ? `https:${anyIframe}` : anyIframe;
+                return { error: false, searched_endpoint: url, episode: final };
+            }
+        } catch (e: any) {
+            continue;
+        }
     }
-    return { error: true, searched_endpoint: url, episode: null };
+    return { error: true, searched_endpoint: urls[0], episode: null };
 }
 
 export async function GET(
@@ -87,13 +93,10 @@ export async function GET(
     const params = await context.params;
     const { slug, season, episodeNumber } = params;
 
-    // Usando race/settled com limites para garantir que a Netlify responda antes do timeout de 10s
-    const results_promises = [
-        searchAnimeFire(slug, season, episodeNumber),
-        searchAnimesOnlineCC(slug, season, episodeNumber)
-    ];
-
-    const [fire, online] = await Promise.all(results_promises.map(p => p.catch(e => ({ error: true, episode: null }))));
+    const [fire, online] = await Promise.all([
+        searchAnimeFire(slug, season, episodeNumber).catch(() => ({ error: true, episode: null })),
+        searchAnimesOnlineCC(slug, season, episodeNumber).catch(() => ({ error: true, episode: null }))
+    ]);
 
     const results = [
         {
@@ -117,7 +120,7 @@ export async function GET(
     if (!found) {
         return NextResponse.json({
             error: true,
-            message: "Conteúdo não disponível nos servidores (Bloqueio de IP da Hospedagem)",
+            message: "Not Found",
             status: 404
         }, { status: 404 });
     }
