@@ -362,7 +362,7 @@ export default function Home() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  const fetchEpisode = async (animeSlug?: string, epNum?: string, seaNum?: string, audioType?: 'sub' | 'dub') => {
+  const fetchEpisode = async (animeSlug?: string, epNum?: string, seaNum?: string, audioType?: 'sub' | 'dub', overrideTmdbId?: string, overrideIsMovie?: boolean) => {
     let baseSlug = animeSlug || selectedAnime?.slug;
     if (baseSlug?.endsWith('-dublado')) baseSlug = baseSlug.replace('-dublado', '');
 
@@ -406,8 +406,8 @@ export default function Home() {
 
       // Servidores Estáveis de Backup (Sempre disponíveis para o usuário)
       const currentAnime = selectedAnime || animeList.find((a: any) => a.slug === baseSlug);
-      const tmdbId = currentAnime?.tmdbId;
-      const isMovie = currentAnime?.type === 'movie';
+      const tmdbId = overrideTmdbId || currentAnime?.tmdbId;
+      const isMovie = overrideIsMovie !== undefined ? overrideIsMovie : (currentAnime?.type === 'movie');
 
       const cloudFallbacks = tmdbId ? [
         {
@@ -504,13 +504,14 @@ export default function Home() {
     }
 
     if (anime.mediaId || tmdbId) {
+      const isMovie = anime.type === 'movie';
       const fullAnime = { ...anime, tmdbId };
       setSelectedAnime(fullAnime);
       setSeason('1');
       setEpisode('1');
       setAudio('sub');
       setView('watch');
-      fetchEpisode(anime.slug, '1', '1', 'sub');
+      fetchEpisode(anime.slug, '1', '1', 'sub', tmdbId, isMovie);
     } else {
       // Logic for global search results from Animes Online CC
       try {
@@ -518,6 +519,7 @@ export default function Home() {
         const data = await res.json();
         if (!data.error) {
           const fetchedTmdbId = await resolveTmdbId(data.data.title || anime.title);
+          const isMovie = anime.type === 'movie';
           const fullAnime = {
             ...anime,
             tmdbId: fetchedTmdbId,
@@ -532,7 +534,7 @@ export default function Home() {
 
           const firstSeason = data.data.seasons[0];
           const firstEp = firstSeason?.episodes[0];
-          fetchEpisode(firstEp?.slug || anime.slug, '1', '1', 'sub');
+          fetchEpisode(firstEp?.slug || anime.slug, '1', '1', 'sub', fetchedTmdbId, isMovie);
         } else {
           setError("Não foi possível carregar os detalhes.");
         }
@@ -549,9 +551,8 @@ export default function Home() {
     if (url.startsWith('/')) {
       return `/api/proxy?url=${encodeURIComponent('https://animesonlinecc.to' + url)}`;
     }
-    // Reliable sources that don't need proxy and load faster directly
-    if (url.includes('anilist.co') || url.includes('tmdb.org') || url.includes('themoviedb.org')) return url;
     if (url.includes('ui-avatars.com')) return url;
+    // Proxy ALL external images/resources to solve OpaqueResponseBlocking
     return `/api/proxy?url=${encodeURIComponent(url)}`;
   };
 
