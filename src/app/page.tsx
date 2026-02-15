@@ -365,39 +365,39 @@ export default function Home() {
 
       const cloudFallbacks = tmdbId ? [
         {
-          name: 'VIP ULTRA 3 [BRASIL]',
+          name: 'VIP MASTER 3 [BRASIL]',
           slug: 'stable-1',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://autoembed.to/movie/tmdb/${tmdbId}?server=10`
-              : `https://autoembed.to/tv/tmdb/${tmdbId}-${currentSea}-${currentEp}?server=10`
+              ? `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}`
+              : `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}&season=${currentSea}&episode=${currentEp}`
           }]
         },
         {
-          name: 'VIP ULTRA 4 [BRASIL]',
+          name: 'VIP MASTER 4 [BR]',
           slug: 'stable-2',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://embed.plus/movie/${tmdbId}`
-              : `https://embed.plus/tv/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
+              : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         },
         {
-          name: 'Global Play (Multilingue)',
+          name: 'Global Play (HD)',
           slug: 'stable-3',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://vidsrc.to/embed/movie/${tmdbId}`
-              : `https://vidsrc.to/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://vidsrc.icu/embed/movie/${tmdbId}`
+              : `https://vidsrc.icu/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         }
       ] : [];
@@ -679,7 +679,6 @@ export default function Home() {
                           className="w-full h-full border-0 shadow-2xl"
                           allowFullScreen
                           allow="autoplay; fullscreen"
-                          sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts"
                         />
                       ) : (
                         <video
