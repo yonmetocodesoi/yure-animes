@@ -9,27 +9,44 @@ const GHOST_HEADERS = {
     'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
 };
 
-// --- Busca TMDB ID automaticamente pelo titulo ---
+// --- Busca TMDB ID via AniList + MalSync (100% grátis, sem API key) ---
 async function resolveTmdbId(title: string): Promise<string | null> {
     try {
-        // Limpar titulo para busca
         const cleanTitle = title
-            .replace(/-dublado|-dub|-legendado/gi, '')
+            .replace(/-dublado|-dub|-legendado|-todos-os-episodios/gi, '')
             .replace(/-/g, ' ')
             .trim();
 
-        // Usar a API gratuita do TMDB (v3) 
-        const searchUrl = `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(cleanTitle)}&language=pt-BR&api_key=d56e51fb77b081a9cb5192571b7c672d`;
-        const res = await axios.get(searchUrl, { timeout: 3000 });
-        if (res.data.results && res.data.results.length > 0) {
-            return res.data.results[0].id.toString();
+        // Passo 1: AniList → MAL ID
+        const query = `
+            query ($search: String) {
+                Media(search: $search, type: ANIME) {
+                    id
+                    idMal
+                    title { english romaji }
+                }
+            }
+        `;
+        const aniRes = await axios.post('https://graphql.anilist.co', {
+            query,
+            variables: { search: cleanTitle }
+        }, { timeout: 3000 });
+
+        const media = aniRes.data?.data?.Media;
+        if (!media?.idMal) return null;
+
+        // Passo 2: MalSync → TMDB ID
+        const malRes = await axios.get(`https://api.malsync.moe/mal/anime/${media.idMal}`, { timeout: 3000 });
+        const sites = malRes.data?.Sites;
+        if (sites?.Tmdb) {
+            const tmdbEntry: any = Object.values(sites.Tmdb)[0];
+            if (tmdbEntry?.url) {
+                const match = tmdbEntry.url.match(/\/(tv|movie)\/(\d+)/);
+                if (match) return match[2];
+            }
         }
-        // Tentar como filme
-        const movieUrl = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(cleanTitle)}&language=pt-BR&api_key=d56e51fb77b081a9cb5192571b7c672d`;
-        const movieRes = await axios.get(movieUrl, { timeout: 3000 });
-        if (movieRes.data.results && movieRes.data.results.length > 0) {
-            return movieRes.data.results[0].id.toString();
-        }
+
+        return media.idMal.toString();
     } catch (e) { }
     return null;
 }
