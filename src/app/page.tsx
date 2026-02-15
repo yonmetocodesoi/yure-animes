@@ -365,39 +365,63 @@ export default function Home() {
 
       const cloudFallbacks = tmdbId ? [
         {
-          name: currentAudio === 'dub' ? 'Servidor Dublado 1 (VIP)' : 'Servidor PT-BR 1',
+          name: 'Servidor VIP (PT-BR)',
           slug: 'stable-1',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://superflixapi.top/filme/${tmdbId}`
-              : `https://superflixapi.top/serie/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://vidsrc.icu/embed/movie/${tmdbId}`
+              : `https://vidsrc.icu/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         },
         {
-          name: 'Servidor Dublado 2 (Fast)',
+          name: 'Servidor Anime Fast',
           slug: 'stable-2',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://autoembed.to/movie/tmdb/${tmdbId}?server=1`
-              : `https://autoembed.to/tv/tmdb/${tmdbId}-${currentSea}-${currentEp}?server=1`
+              ? `https://vidsrc.net/embed/movie/${tmdbId}`
+              : `https://vidsrc.net/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         },
         {
-          name: 'Global Legendado (HD)',
+          name: 'Global Play (HD)',
           slug: 'stable-3',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://vidsrc.to/embed/movie/${tmdbId}`
-              : `https://vidsrc.to/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://vidsrc.pm/embed/movie/${tmdbId}`
+              : `https://vidsrc.pm/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+          }]
+        },
+        {
+          name: 'Servidor Dublado (BR)',
+          slug: 'stable-4',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}`
+              : `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}&season=${currentSea}&episode=${currentEp}`
+          }]
+        },
+        {
+          name: 'Reserva Master',
+          slug: 'stable-5',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://multiembed.mov/?video_id=${tmdbId}`
+              : `https://multiembed.mov/?video_id=${tmdbId}&s=${currentSea}&e=${currentEp}`
           }]
         }
       ] : [];
@@ -472,9 +496,8 @@ export default function Home() {
     if (url.startsWith('/')) {
       return `/api/proxy?url=${encodeURIComponent('https://animesonlinecc.to' + url)}`;
     }
-    // AniList images are usually safe to load directly and this avoids proxy overhead/errors
-    if (url.includes('anilist.co')) return url;
     if (url.includes('ui-avatars.com')) return url;
+    // Proxy AniList too as it might be blocked for some users
     return `/api/proxy?url=${encodeURIComponent(url)}`;
   };
 
@@ -482,7 +505,7 @@ export default function Home() {
 
   const isEmbed = (url: string) => {
     if (!url) return false;
-    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed'];
+    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed'];
     return embeds.some(e => url.includes(e));
   };
 
@@ -626,7 +649,7 @@ export default function Home() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xxl:grid-cols-5 gap-8">
                   {filteredCatalog.map((anime) => (
                     <div
-                      key={anime.slug}
+                      key={`${anime.slug}-${anime.mediaId}`}
                       className="anime-card-v2 group aspect-[2/3]"
                       onClick={() => handleSelectAnime(anime)}
                     >
