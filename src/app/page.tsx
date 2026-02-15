@@ -365,8 +365,32 @@ export default function Home() {
 
       const cloudFallbacks = tmdbId ? [
         {
-          name: 'Servidor VIP (PT-BR)',
+          name: 'Servidor VIP 3 [BRASIL]',
           slug: 'stable-1',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://autoembed.to/movie/tmdb/${tmdbId}?server=player10`
+              : `https://autoembed.to/tv/tmdb/${tmdbId}-${currentSea}-${currentEp}?server=player10`
+          }]
+        },
+        {
+          name: 'Servidor VIP 4 [BR]',
+          slug: 'stable-2',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://embed.warezcdn.com/movie/${tmdbId}`
+              : `https://embed.warezcdn.com/serie/${tmdbId}/${currentSea}/${currentEp}`
+          }]
+        },
+        {
+          name: 'Global Multilingue',
+          slug: 'stable-3',
           has_ads: true,
           is_embed: true,
           episodes: [{
@@ -374,54 +398,6 @@ export default function Home() {
             episode: isMovie
               ? `https://vidsrc.icu/embed/movie/${tmdbId}`
               : `https://vidsrc.icu/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-          }]
-        },
-        {
-          name: 'Servidor Anime Fast',
-          slug: 'stable-2',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://vidsrc.net/embed/movie/${tmdbId}`
-              : `https://vidsrc.net/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-          }]
-        },
-        {
-          name: 'Global Play (HD)',
-          slug: 'stable-3',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://vidsrc.pm/embed/movie/${tmdbId}`
-              : `https://vidsrc.pm/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-          }]
-        },
-        {
-          name: 'Servidor Dublado (BR)',
-          slug: 'stable-4',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}`
-              : `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}&season=${currentSea}&episode=${currentEp}`
-          }]
-        },
-        {
-          name: 'Reserva Master',
-          slug: 'stable-5',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://multiembed.mov/?video_id=${tmdbId}`
-              : `https://multiembed.mov/?video_id=${tmdbId}&s=${currentSea}&e=${currentEp}`
           }]
         }
       ] : [];
