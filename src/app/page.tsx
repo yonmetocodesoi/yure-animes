@@ -13,6 +13,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 21, // One Piece
     title: "One Piece",
+    tmdbId: "37854",
     slug: "one-piece",
     dubSlug: "one-piece-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21-YCDuy1eJYxhu.jpg",
@@ -26,6 +27,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 21175, // Dragon Ball Super
     title: "Dragon Ball Super",
+    tmdbId: "62715",
     slug: "dragon-ball-super",
     dubSlug: "dragon-ball-super-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21175-v4r77saodV0I.jpg",
@@ -39,6 +41,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 151807, // Solo Leveling
     title: "Solo Leveling",
+    tmdbId: "214691",
     slug: "solo-leveling",
     dubSlug: "solo-leveling-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx151807-m1gX3i8LHLTU.jpg",
@@ -52,6 +55,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 1735, // Naruto Shippuden
     title: "Naruto Shippuden",
+    tmdbId: "31910",
     slug: "naruto-shippuden",
     dubSlug: "naruto-shippuden-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1735-4l90z37qP2ks.jpg",
@@ -65,6 +69,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 127881, // Jujutsu Kaisen 0
     title: "Jujutsu Kaisen 0",
+    tmdbId: "912316",
     slug: "jujutsu-kaisen-0-o-filme",
     dubSlug: "jujutsu-kaisen-0-o-filme-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx127881-tY88888.jpg",
@@ -78,6 +83,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 113415, // Jujutsu Kaisen
     title: "Jujutsu Kaisen",
+    tmdbId: "95479",
     slug: "jujutsu-kaisen",
     dubSlug: "jujutsu-kaisen-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx113415-bbBWj4pEfseh.jpg",
@@ -91,6 +97,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 112151, // Demon Slayer: Mugen Train
     title: "Demon Slayer: Mugen Train",
+    tmdbId: "635302",
     slug: "kimetsu-no-yaiba-mugen-ressha-hen",
     dubSlug: "kimetsu-no-yaiba-mugen-ressha-hen-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx112151-6Vv782.jpg",
@@ -104,6 +111,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 21519, // Your Name
     title: "Your Name",
+    tmdbId: "372058",
     slug: "kimi-no-na-wa",
     dubSlug: "kimi-no-na-wa-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21519-99999999.jpg",
@@ -117,6 +125,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 145928, // Suzume
     title: "Suzume no Tojimari",
+    tmdbId: "916224",
     slug: "suzume-no-tojimari",
     dubSlug: "suzume-no-tojimari-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx145928-8Hj781.jpg",
@@ -130,6 +139,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 142144, // One Piece Film Red
     title: "One Piece Film Red",
+    tmdbId: "900667",
     slug: "one-piece-filme-red",
     dubSlug: "one-piece-filme-red-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx142144-8Yv782.jpg",
@@ -143,6 +153,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 114446, // Bleach TYBW
     title: "Bleach: Thousand-Year Blood War",
+    tmdbId: "204541",
     slug: "bleach-thousand-year-blood-war",
     dubSlug: "bleach-thousand-year-blood-war-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx114446-U8R5L1.jpg",
@@ -156,6 +167,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 97940, // Black Clover
     title: "Black Clover",
+    tmdbId: "73223",
     slug: "black-clover",
     dubSlug: "black-clover-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx97940-99axS9.jpg",
@@ -169,6 +181,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 16498, // Attack on Titan
     title: "Attack on Titan",
+    tmdbId: "1429",
     slug: "shingeki-no-kyojin",
     dubSlug: "shingeki-no-kyojin-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx16498-CXofI6.jpg",
@@ -182,6 +195,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 11061, // Hunter x Hunter
     title: "Hunter x Hunter (2011)",
+    tmdbId: "46298",
     slug: "hunter-x-hunter-2011",
     dubSlug: "hunter-x-hunter-2011-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx11061-6H0O6B.jpg",
@@ -195,6 +209,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 101922, // Demon Slayer
     title: "Demon Slayer: Kimetsu no Yaiba",
+    tmdbId: "85350",
     slug: "kimetsu-no-yaiba",
     dubSlug: "kimetsu-no-yaiba-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101922-W3F3sM.jpg",
@@ -208,6 +223,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 21459, // My Hero Academia
     title: "My Hero Academia",
+    tmdbId: "65930",
     slug: "boku-no-hero-academia",
     dubSlug: "boku-no-hero-academia-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21459-YkXySx.jpg",
@@ -220,6 +236,7 @@ const INITIAL_CATALOG = [
   },
   {
     mediaId: 1535, // Death Note
+    tmdbId: "13916",
     title: "Death Note",
     slug: "death-note",
     dubSlug: "death-note-dublado",
@@ -234,6 +251,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 5114, // Fullmetal Alchemist
     title: "Fullmetal Alchemist: Brotherhood",
+    tmdbId: "31845",
     slug: "fullmetal-alchemist-brotherhood",
     dubSlug: "fullmetal-alchemist-brotherhood-dublado",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx5114-6H0O6B.jpg",
@@ -247,6 +265,7 @@ const INITIAL_CATALOG = [
   {
     mediaId: 9253, // Steins;Gate
     title: "Steins;Gate",
+    tmdbId: "36871",
     slug: "steins-gate",
     image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx9253-6H0O6B.jpg",
     category: "Sci-Fi",
@@ -324,9 +343,44 @@ export default function Home() {
         const first = foundData.find((r: any) => r.episodes[0] && !r.episodes[0].error);
         if (first) setActiveVideo(first.episodes[0].episode);
       } else {
-        if (currentAudio === 'dub') setError('Versão dublada não encontrada.');
-        else setError('Episódio não encontrado.');
-        setResults([]);
+        // FALLBACK: Se os scrapers falharem (Bloqueio Netlify), usa os Players Estáveis por ID
+        const currentAnime = selectedAnime || animeList.find((a: any) => a.slug === baseSlug);
+        if (currentAnime?.tmdbId) {
+          const tmdbId = currentAnime.tmdbId;
+          const isMovie = currentAnime.type === 'movie';
+          const cloudResults = [
+            {
+              name: 'Multi-Server (Estável)',
+              slug: 'stable-1',
+              has_ads: true,
+              is_embed: true,
+              episodes: [{
+                error: false,
+                episode: isMovie
+                  ? `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`
+                  : `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&sea=${currentSea}&epi=${currentEp}`
+              }]
+            },
+            {
+              name: 'Player Premium (Bypass)',
+              slug: 'stable-2',
+              has_ads: false,
+              is_embed: true,
+              episodes: [{
+                error: false,
+                episode: isMovie
+                  ? `https://superemba.com/tv/movie/${tmdbId}`
+                  : `https://superemba.com/tv/anime/${tmdbId}/${currentSea}/${currentEp}`
+              }]
+            }
+          ];
+          setResults(cloudResults);
+          setActiveVideo(cloudResults[0].episodes[0].episode);
+        } else {
+          if (currentAudio === 'dub') setError('Versão dublada não encontrada.');
+          else setError('Episódio não encontrado.');
+          setResults([]);
+        }
       }
     } catch (err) {
       setError('Erro de conexão.');
