@@ -347,22 +347,25 @@ export default function Home() {
     try {
       let foundData = null;
 
-      // Tentar API Local primeiro (Portas 3000 ou 1010)
-      const localPorts = ['1010', '3000'];
-      for (const port of localPorts) {
+      // 1. Tentar o Servidor Cloud (Render - acessível por todos!)
+      const CLOUD_SERVER = 'https://serveranimesite.onrender.com';
+      for (const s of slugsToTry) {
         try {
-          const localRes = await fetch(`http://localhost:${port}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`, { mode: 'cors' });
-          if (localRes.ok) {
-            const localData = await localRes.json();
-            if (localData.data && localData.data.length > 0) {
-              foundData = localData.data.map((r: any) => ({ ...r, name: `🏠 LOCAL - ${r.name}` }));
+          const cloudRes = await fetch(`${CLOUD_SERVER}/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
+          if (cloudRes.ok) {
+            const cloudData = await cloudRes.json();
+            if (cloudData.data && cloudData.data.length > 0) {
+              foundData = cloudData.data.map((r: any) => ({ ...r, name: `☁️ ${r.name}` }));
+              if (cloudData.tmdbId && activeAnime && !activeAnime.tmdbId) {
+                setSelectedAnime({ ...activeAnime, tmdbId: cloudData.tmdbId });
+              }
               break;
             }
           }
         } catch (e) { }
       }
 
-      // Tentar API Cloud (Netlify)
+      // 2. Fallback: API interna do Netlify
       if (!foundData) {
         for (const s of slugsToTry) {
           try {
@@ -370,7 +373,6 @@ export default function Home() {
             const data = await res.json();
             if (data.data && data.data.length > 0) {
               foundData = data.data;
-              // Salvar o tmdbId resolvido pelo backend para futuras buscas
               if (data.tmdbId && activeAnime && !activeAnime.tmdbId) {
                 setSelectedAnime({ ...activeAnime, tmdbId: data.tmdbId });
               }
