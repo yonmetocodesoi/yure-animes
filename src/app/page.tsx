@@ -297,52 +297,6 @@ export default function Home() {
     [searchQuery, animeList]
   );
 
-  // Fetch Trending Animes for dynamic catalog
-  useEffect(() => {
-    const fetchCatalog = async () => {
-      const query = `
-        query {
-          Page(page: 1, perPage: 20) {
-            media(type: ANIME, sort: TRENDING_DESC) {
-              id
-              title { romaji english }
-              coverImage { extraLarge }
-              description
-              averageScore
-              status
-              genres
-              format
-            }
-          }
-        }
-      `;
-
-      try {
-        const response = await fetch('https://graphql.anilist.co', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query })
-        });
-        const data = await response.json();
-        const animes = data.data.Page.media.map((m: any) => ({
-          mediaId: m.id,
-          title: m.title.romaji || m.title.english,
-          image: m.coverImage.extraLarge,
-          description: m.description?.replace(/<[^>]*>?/gm, '') || '',
-          rating: (m.averageScore / 10).toFixed(1),
-          status: m.status,
-          category: m.genres[0] || 'Anime',
-          type: m.format === 'MOVIE' ? 'movie' : 'serie',
-          slug: (m.title.romaji || m.title.english).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-        }));
-        if (animes.length > 0) setAnimeList(animes);
-      } catch (e) {
-        console.error("Failed to fetch AniList catalog", e);
-      }
-    };
-    fetchCatalog();
-  }, []);
-
   // Global search effect
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
@@ -362,7 +316,7 @@ export default function Home() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  const fetchEpisode = async (animeSlug?: string, epNum?: string, seaNum?: string, audioType?: 'sub' | 'dub', overrideTmdbId?: string, overrideIsMovie?: boolean) => {
+  const fetchEpisode = async (animeSlug?: string, epNum?: string, seaNum?: string, audioType?: 'sub' | 'dub') => {
     let baseSlug = animeSlug || selectedAnime?.slug;
     if (baseSlug?.endsWith('-dublado')) baseSlug = baseSlug.replace('-dublado', '');
 
@@ -406,8 +360,8 @@ export default function Home() {
 
       // Servidores Estáveis de Backup (Sempre disponíveis para o usuário)
       const currentAnime = selectedAnime || animeList.find((a: any) => a.slug === baseSlug);
-      const tmdbId = overrideTmdbId || currentAnime?.tmdbId;
-      const isMovie = overrideIsMovie !== undefined ? overrideIsMovie : (currentAnime?.type === 'movie');
+      const tmdbId = currentAnime?.tmdbId;
+      const isMovie = currentAnime?.type === 'movie';
 
       const cloudFallbacks = tmdbId ? [
         {
@@ -418,20 +372,20 @@ export default function Home() {
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://vidlink.pro/movie/${tmdbId}?primaryColor=ffcc00`
-              : `https://vidlink.pro/tv/${tmdbId}/${currentSea}/${currentEp}?primaryColor=ffcc00`
+              ? `https://vidsrc.icu/embed/movie/${tmdbId}`
+              : `https://vidsrc.icu/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         },
         {
-          name: 'Servidor Dublado (BR)',
+          name: 'Servidor Anime Fast',
           slug: 'stable-2',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}`
-              : `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}&season=${currentSea}&episode=${currentEp}`
+              ? `https://vidsrc.net/embed/movie/${tmdbId}`
+              : `https://vidsrc.net/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         },
         {
@@ -442,13 +396,25 @@ export default function Home() {
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
-              : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://vidsrc.pm/embed/movie/${tmdbId}`
+              : `https://vidsrc.pm/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+          }]
+        },
+        {
+          name: 'Servidor Dublado (BR)',
+          slug: 'stable-4',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}`
+              : `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}&season=${currentSea}&episode=${currentEp}`
           }]
         },
         {
           name: 'Reserva Master',
-          slug: 'stable-4',
+          slug: 'stable-5',
           has_ads: true,
           is_embed: true,
           episodes: [{
@@ -482,77 +448,56 @@ export default function Home() {
     }
   };
 
-  const resolveTmdbId = async (title: string, type: string = 'multi') => {
-    try {
-      const res = await fetch(`/api/tmdb?q=${encodeURIComponent(title)}&type=${type}`);
-      const data = await res.json();
-      return data.id || null;
-    } catch (e) {
-      return null;
-    }
-  };
-
   const handleSelectAnime = async (anime: any) => {
-    setLoading(true);
-    setError(null);
-    setActiveVideo(null);
-    setResults([]);
-
-    const isMovie = anime.type === 'movie' || anime.format === 'MOVIE';
-    let tmdbId = anime.tmdbId;
-
-    if (!tmdbId && anime.title) {
-      tmdbId = await resolveTmdbId(anime.title, isMovie ? 'movie' : 'tv');
-      if (!tmdbId) tmdbId = await resolveTmdbId(anime.title, 'multi');
-    }
-
-    if (anime.mediaId || tmdbId) {
-      const fullAnime = { ...anime, tmdbId };
-      setSelectedAnime(fullAnime);
+    // Se o anime já tem tmdbId ou slug interno, vai pro fluxo normal
+    if (anime.mediaId || anime.tmdbId) {
+      setSelectedAnime(anime);
       setSeason('1');
       setEpisode('1');
       setAudio('sub');
       setView('watch');
-
-      // If it's a search result from Animes Online CC, it might need extra details
-      if (anime.slug && !anime.mediaId && !anime.tmdbId) {
-        try {
-          const res = await fetch(`/api/details/${anime.slug}`);
-          const data = await res.json();
-          if (!data.error) {
-            const updatedAnime = {
-              ...fullAnime,
-              seasons: data.data.seasons,
-              description: data.data.synopsis,
-              isGlobal: true
-            };
-            setSelectedAnime(updatedAnime);
-            const firstEp = data.data.seasons[0]?.episodes[0];
-            fetchEpisode(firstEp?.slug || anime.slug, '1', '1', 'sub', tmdbId, isMovie);
-            return;
-          }
-        } catch (e) { }
-      }
-
-      fetchEpisode(anime.slug, '1', '1', 'sub', tmdbId, isMovie);
+      fetchEpisode(anime.slug, '1', '1', 'sub');
     } else {
-      setError("Não foi possível localizar este anime nos servidores.");
-      setLoading(false);
+      // Anime vindo da busca global (Animes Online CC)
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/details/${anime.slug}`);
+        const data = await res.json();
+        if (!data.error) {
+          const fullAnime = {
+            ...anime,
+            seasons: data.data.seasons,
+            description: data.data.synopsis,
+            isGlobal: true
+          };
+          setSelectedAnime(fullAnime);
+          setSeason('1');
+          setEpisode('1');
+          setView('watch');
+
+          // Pegar o primeiro episódio real do primeiro item da season
+          const firstSeason = data.data.seasons[0];
+          const firstEp = firstSeason.episodes[0];
+          fetchEpisode(firstEp.slug, '1', '1', 'sub');
+        } else {
+          setError("Não foi possível carregar os detalhes deste anime.");
+        }
+      } catch (err) {
+        setError("Erro ao conectar com o servidor de busca.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   const proxyUrl = (url: string) => {
     if (!url) return '';
-    // If it's already a proxy or a local path, don't double proxy
-    if (url.includes('/api/proxy') || url.startsWith('blob:') || url.startsWith('data:')) return url;
-
     if (url.startsWith('/')) {
       return `/api/proxy?url=${encodeURIComponent('https://animesonlinecc.to' + url)}`;
     }
-
     if (url.includes('ui-avatars.com')) return url;
-
-    // Proxy ALL external images/resources to solve OpaqueResponseBlocking/CORS
+    // Proxy AniList too as it might be blocked for some users
     return `/api/proxy?url=${encodeURIComponent(url)}`;
   };
 
@@ -560,7 +505,7 @@ export default function Home() {
 
   const isEmbed = (url: string) => {
     if (!url) return false;
-    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed', 'vidlink', 'smashystream', 'duckdns'];
+    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed'];
     return embeds.some(e => url.includes(e));
   };
 
@@ -755,10 +700,10 @@ export default function Home() {
                       isEmbed(activeVideo) ? (
                         <iframe
                           src={activeVideo}
-                          className="w-full h-full border-0 shadow-2xl bg-black"
+                          className="w-full h-full border-0 shadow-2xl"
                           allowFullScreen
-                          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                          sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation allow-presentation allow-popups-to-escape-sandbox"
+                          allow="autoplay; fullscreen"
+                          sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts"
                         />
                       ) : (
                         <video
