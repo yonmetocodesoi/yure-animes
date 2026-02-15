@@ -365,31 +365,31 @@ export default function Home() {
 
       const cloudFallbacks = tmdbId ? [
         {
-          name: 'Servidor VIP 3 [BRASIL]',
+          name: 'Servidor VIP Ultra 3 [BR]',
           slug: 'stable-1',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://autoembed.to/movie/tmdb/${tmdbId}?server=player10`
-              : `https://autoembed.to/tv/tmdb/${tmdbId}-${currentSea}-${currentEp}?server=player10`
+              ? `https://superemba.com/embed/movie/${tmdbId}`
+              : `https://superemba.com/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         },
         {
-          name: 'Servidor VIP 4 [BR]',
+          name: 'Servidor VIP Ultra 4 [BR]',
           slug: 'stable-2',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://embed.warezcdn.com/movie/${tmdbId}`
-              : `https://embed.warezcdn.com/serie/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}`
+              : `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}&season=${currentSea}&episode=${currentEp}`
           }]
         },
         {
-          name: 'Global Multilingue',
+          name: 'Global Play (HD)',
           slug: 'stable-3',
           has_ads: true,
           is_embed: true,
@@ -481,7 +481,7 @@ export default function Home() {
 
   const isEmbed = (url: string) => {
     if (!url) return false;
-    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed'];
+    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed', 'smashy'];
     return embeds.some(e => url.includes(e));
   };
 
