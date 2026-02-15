@@ -297,6 +297,52 @@ export default function Home() {
     [searchQuery, animeList]
   );
 
+  // Fetch Trending Animes for dynamic catalog
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      const query = `
+        query {
+          Page(page: 1, perPage: 20) {
+            media(type: ANIME, sort: TRENDING_DESC) {
+              id
+              title { romaji english }
+              coverImage { extraLarge }
+              description
+              averageScore
+              status
+              genres
+              format
+            }
+          }
+        }
+      `;
+
+      try {
+        const response = await fetch('https://graphql.anilist.co', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const data = await response.json();
+        const animes = data.data.Page.media.map((m: any) => ({
+          mediaId: m.id,
+          title: m.title.romaji || m.title.english,
+          image: m.coverImage.extraLarge,
+          description: m.description?.replace(/<[^>]*>?/gm, '') || '',
+          rating: (m.averageScore / 10).toFixed(1),
+          status: m.status,
+          category: m.genres[0] || 'Anime',
+          type: m.format === 'MOVIE' ? 'movie' : 'serie',
+          slug: (m.title.romaji || m.title.english).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        }));
+        if (animes.length > 0) setAnimeList(animes);
+      } catch (e) {
+        console.error("Failed to fetch AniList catalog", e);
+      }
+    };
+    fetchCatalog();
+  }, []);
+
   // Global search effect
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
@@ -365,19 +411,19 @@ export default function Home() {
 
       const cloudFallbacks = tmdbId ? [
         {
-          name: 'Servidor Dublado (BR)',
+          name: 'Servidor VIP (PT-BR)',
           slug: 'stable-1',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://player.duckdns.org/movie/${tmdbId}`
-              : `https://player.duckdns.org/tv/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://vidlink.pro/movie/${tmdbId}?primaryColor=ffcc00`
+              : `https://vidlink.pro/tv/${tmdbId}/${currentSea}/${currentEp}?primaryColor=ffcc00`
           }]
         },
         {
-          name: 'Servidor VIP 2',
+          name: 'Servidor Dublado (BR)',
           slug: 'stable-2',
           has_ads: true,
           is_embed: true,
@@ -389,21 +435,20 @@ export default function Home() {
           }]
         },
         {
-          name: 'Global Fast',
+          name: 'Global Play (HD)',
           slug: 'stable-3',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://vidsrc.net/embed/movie/${tmdbId}`
-              : `https://vidsrc.net/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
+              : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
-        }
-        ,
+        },
         {
           name: 'Reserva Master',
-          slug: 'stable-5',
+          slug: 'stable-4',
           has_ads: true,
           is_embed: true,
           episodes: [{
@@ -437,25 +482,45 @@ export default function Home() {
     }
   };
 
+  const resolveTmdbId = async (title: string) => {
+    try {
+      const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=15d1a9983d3246a1adb2a4d048497274&query=${encodeURIComponent(title)}&language=pt-BR`);
+      const data = await res.json();
+      return data.results?.[0]?.id || null;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const handleSelectAnime = async (anime: any) => {
-    // Se o anime já tem tmdbId ou slug interno, vai pro fluxo normal
-    if (anime.mediaId || anime.tmdbId) {
-      setSelectedAnime(anime);
+    setLoading(true);
+    setError(null);
+    setActiveVideo(null);
+    setResults([]);
+
+    let tmdbId = anime.tmdbId;
+    if (!tmdbId && anime.title) {
+      tmdbId = await resolveTmdbId(anime.title);
+    }
+
+    if (anime.mediaId || tmdbId) {
+      const fullAnime = { ...anime, tmdbId };
+      setSelectedAnime(fullAnime);
       setSeason('1');
       setEpisode('1');
       setAudio('sub');
       setView('watch');
       fetchEpisode(anime.slug, '1', '1', 'sub');
     } else {
-      // Anime vindo da busca global (Animes Online CC)
-      setLoading(true);
-      setError(null);
+      // Logic for global search results from Animes Online CC
       try {
         const res = await fetch(`/api/details/${anime.slug}`);
         const data = await res.json();
         if (!data.error) {
+          const fetchedTmdbId = await resolveTmdbId(data.data.title || anime.title);
           const fullAnime = {
             ...anime,
+            tmdbId: fetchedTmdbId,
             seasons: data.data.seasons,
             description: data.data.synopsis,
             isGlobal: true
@@ -465,15 +530,14 @@ export default function Home() {
           setEpisode('1');
           setView('watch');
 
-          // Pegar o primeiro episódio real do primeiro item da season
           const firstSeason = data.data.seasons[0];
-          const firstEp = firstSeason.episodes[0];
-          fetchEpisode(firstEp.slug, '1', '1', 'sub');
+          const firstEp = firstSeason?.episodes[0];
+          fetchEpisode(firstEp?.slug || anime.slug, '1', '1', 'sub');
         } else {
-          setError("Não foi possível carregar os detalhes deste anime.");
+          setError("Não foi possível carregar os detalhes.");
         }
       } catch (err) {
-        setError("Erro ao conectar com o servidor de busca.");
+        setError("Erro ao carregar detalhes.");
       } finally {
         setLoading(false);
       }
@@ -485,8 +549,9 @@ export default function Home() {
     if (url.startsWith('/')) {
       return `/api/proxy?url=${encodeURIComponent('https://animesonlinecc.to' + url)}`;
     }
+    // Reliable sources that don't need proxy and load faster directly
+    if (url.includes('anilist.co') || url.includes('tmdb.org') || url.includes('themoviedb.org')) return url;
     if (url.includes('ui-avatars.com')) return url;
-    // Proxy AniList too as it might be blocked for some users
     return `/api/proxy?url=${encodeURIComponent(url)}`;
   };
 
@@ -494,7 +559,7 @@ export default function Home() {
 
   const isEmbed = (url: string) => {
     if (!url) return false;
-    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed'];
+    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed', 'vidlink', 'smashystream', 'duckdns'];
     return embeds.some(e => url.includes(e));
   };
 
@@ -689,10 +754,10 @@ export default function Home() {
                       isEmbed(activeVideo) ? (
                         <iframe
                           src={activeVideo}
-                          className="w-full h-full border-0 shadow-2xl"
+                          className="w-full h-full border-0 shadow-2xl bg-black"
                           allowFullScreen
-                          allow="autoplay; fullscreen"
-                          sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
+                          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                          sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation allow-presentation allow-popups-to-escape-sandbox"
                         />
                       ) : (
                         <video
