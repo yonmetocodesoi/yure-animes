@@ -345,16 +345,30 @@ export default function Home() {
 
     try {
       let foundData = null;
-      for (const slug of slugsToTry) {
-        try {
-          const res = await fetch(`/api/episode/${slug}/${currentSea}/${currentEp}?tmdbId=${selectedAnime?.tmdbId || ''}&type=${selectedAnime?.type || 'serie'}`);
-          const data = await res.json();
-          if (res.status === 200 && !data.error && data.data && data.data.length > 0) {
-            foundData = data.data;
-            break;
+
+      // Tentar API Local primeiro (Excelente para evitar bloqueios de IP na Netlify)
+      try {
+        const localRes = await fetch(`http://localhost:3000/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${selectedAnime?.tmdbId || ''}`, { mode: 'cors' });
+        if (localRes.ok) {
+          const localData = await localRes.json();
+          if (!localData.error && localData.data) {
+            foundData = localData.data.map((r: any) => ({ ...r, name: `🏠 LOCAL - ${r.name}` }));
           }
-        } catch (e) {
-          // Continue
+        }
+      } catch (e) {
+        // API Local offline, segue para a API Cloud
+      }
+
+      if (!foundData) {
+        for (const s of slugsToTry) {
+          try {
+            const res = await fetch(`/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${selectedAnime?.tmdbId || ''}&type=${selectedAnime?.type || 'serie'}`);
+            const data = await res.json();
+            if (res.status === 200 && !data.error && data.data && data.data.length > 0) {
+              foundData = data.data;
+              break;
+            }
+          } catch (e) { }
         }
       }
 
