@@ -346,17 +346,19 @@ export default function Home() {
     try {
       let foundData = null;
 
-      // Tentar API Local primeiro (Excelente para evitar bloqueios de IP na Netlify)
-      try {
-        const localRes = await fetch(`http://localhost:3000/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${selectedAnime?.tmdbId || ''}`, { mode: 'cors' });
-        if (localRes.ok) {
-          const localData = await localRes.json();
-          if (!localData.error && localData.data) {
-            foundData = localData.data.map((r: any) => ({ ...r, name: `🏠 LOCAL - ${r.name}` }));
+      // Tentar API Local primeiro (Portas 3000 ou 1010)
+      const localPorts = ['3000', '1010'];
+      for (const port of localPorts) {
+        try {
+          const localRes = await fetch(`http://localhost:${port}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${selectedAnime?.tmdbId || ''}`, { mode: 'cors' });
+          if (localRes.ok) {
+            const localData = await localRes.json();
+            if (!localData.error && localData.data) {
+              foundData = localData.data.map((r: any) => ({ ...r, name: `🏠 LOCAL (${port}) - ${r.name}` }));
+              break;
+            }
           }
-        }
-      } catch (e) {
-        // API Local offline, segue para a API Cloud
+        } catch (e) { }
       }
 
       if (!foundData) {
