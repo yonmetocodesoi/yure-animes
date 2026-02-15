@@ -365,8 +365,32 @@ export default function Home() {
 
       const cloudFallbacks = tmdbId ? [
         {
-          name: 'VIP MASTER 3 [BRASIL]',
+          name: 'VIP MASTER Retro [BR]',
           slug: 'stable-1',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://gogoanime3.co/${(selectedAnime?.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-movie`
+              : `https://gogoanime3.co/${(selectedAnime?.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-episode-${currentEp}`
+          }]
+        },
+        {
+          name: 'VIP MASTER Vizer [BR]',
+          slug: 'stable-2',
+          has_ads: true,
+          is_embed: true,
+          episodes: [{
+            error: false,
+            episode: isMovie
+              ? `https://vizer.tv/embed/movie/${tmdbId}`
+              : `https://vizer.tv/embed/serie/${tmdbId}/${currentSea}/${currentEp}`
+          }]
+        },
+        {
+          name: 'VIP MASTER Play [BR]',
+          slug: 'stable-3',
           has_ads: true,
           is_embed: true,
           episodes: [{
@@ -377,8 +401,8 @@ export default function Home() {
           }]
         },
         {
-          name: 'VIP MASTER 4 [BR]',
-          slug: 'stable-2',
+          name: 'Global Play (HD)',
+          slug: 'stable-4',
           has_ads: true,
           is_embed: true,
           episodes: [{
@@ -386,18 +410,6 @@ export default function Home() {
             episode: isMovie
               ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
               : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
-          }]
-        },
-        {
-          name: 'Global Play (HD)',
-          slug: 'stable-3',
-          has_ads: true,
-          is_embed: true,
-          episodes: [{
-            error: false,
-            episode: isMovie
-              ? `https://vidsrc.icu/embed/movie/${tmdbId}`
-              : `https://vidsrc.icu/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         }
       ] : [];
