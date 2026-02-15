@@ -39,30 +39,211 @@ const INITIAL_CATALOG = [
     type: "serie"
   },
   {
-    mediaId: 151807, // Solo Leveling
+    mediaId: 151807, // Solo Leveling (Updated)
     title: "Solo Leveling",
-    tmdbId: "214691",
+    tmdbId: "141315",
     slug: "solo-leveling",
     dubSlug: "solo-leveling-dublado",
-    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx151807-m1gX3i8LHLTU.jpg",
-    category: "Ação",
-    rating: "4.9",
-    status: "Popular",
-    description: "O caçador mais fraco da humanidade recebe uma chance única de subir de nível sem limites.",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx151801-9Uf76S67vK9L.jpg",
+    category: "Ação / Fantasia",
+    rating: "9.1",
+    status: "Dublado",
+    description: "Em um mundo onde caçadores enfrentam monstros, Sung Jin-woo é o mais fraco até encontrar um segredo.",
     dubbedAvailable: true,
     type: "serie"
   },
   {
-    mediaId: 1735, // Naruto Shippuden
+    mediaId: 1735, // Naruto Shippuden (Updated)
     title: "Naruto Shippuden",
     tmdbId: "31910",
     slug: "naruto-shippuden",
     dubSlug: "naruto-shippuden-dublado",
-    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1735-4l90z37qP2ks.jpg",
-    category: "Shonen",
-    rating: "4.8",
-    status: "Clássico",
-    description: "A jornada de um jovem ninja em busca de reconhecimento e do título de Hokage.",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1735-8p8YvN2lD6u7.png",
+    category: "Ação / Aventura",
+    rating: "8.6",
+    status: "Dublado",
+    description: "Naruto retorna após anos de treinamento para salvar o mundo shinobi de uma ameaça terrível.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 127230, // Chainsaw Man (New)
+    title: "Chainsaw Man",
+    tmdbId: "114410",
+    slug: "chainsaw-man",
+    dubSlug: "chainsaw-man-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx127230-mY7cs99p6S6O.png",
+    rating: "8.7",
+    category: "Ação / Terror",
+    status: "Dublado",
+    description: "Denji, um jovem endividado, revive como o Homem-Motosserra e caça demônios para sobreviver.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 140960, // Spy x Family (New)
+    title: "Spy x Family",
+    tmdbId: "120089",
+    slug: "spy-x-family",
+    dubSlug: "spy-x-family-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx140960-vY60o4UfA02L.jpg",
+    rating: "8.6",
+    category: "Comédia / Espionagem",
+    status: "Dublado",
+    description: "Um espião cria uma família falsa sem saber que sua esposa é uma assassina e sua filha uma telepata.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 97940, // Black Clover (Updated)
+    title: "Black Clover",
+    tmdbId: "73223",
+    slug: "black-clover",
+    dubSlug: "black-clover-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/nx97940-9Sgo6hG6H3C6.jpg",
+    category: "Ação / Magia",
+    rating: "8.5",
+    status: "Dublado",
+    description: "Asta, o único garoto sem magia do reino, luta para se tornar o Rei Mago com sua anti-magia.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 20464, // Haikyuu!! (New)
+    title: "Haikyuu!!",
+    tmdbId: "60634",
+    slug: "haikyuu",
+    dubSlug: "haikyuu-legendado", // Assuming a default for new entries
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx20464-m7D7zInG9063.jpg",
+    rating: "8.8",
+    category: "Esportes / Vôlei",
+    status: "Legendado",
+    description: "A jornada inspiradora de uma equipe de vôlei improvável rumo ao topo do Japão.",
+    dubbedAvailable: false,
+    type: "serie"
+  },
+  {
+    mediaId: 85937, // Demon Slayer
+    title: "Demon Slayer (Kimetsu no Yaiba)",
+    tmdbId: "85937",
+    slug: "kimetsu-no-yaiba",
+    dubSlug: "kimetsu-no-yaiba-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101922-W6Fbe7du6Yid.jpg",
+    category: "Ação / Fantasia",
+    rating: "8.9",
+    status: "Dublado",
+    description: "Tanjiro Kamado luta contra demônios para curar sua irmã e vingar sua família.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 13916, // Death Note
+    title: "Death Note",
+    tmdbId: "13916",
+    slug: "death-note",
+    dubSlug: "death-note-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1535-fU7pYm9nSst4.jpg",
+    category: "Mistério / Suspense",
+    rating: "9.0",
+    status: "Dublado",
+    description: "Um estudante encontra um caderno que mata quem tem o nome escrito nele.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 46298, // Hunter x Hunter
+    title: "Hunter x Hunter (2011)",
+    tmdbId: "46298",
+    slug: "hunter-x-hunter-2011",
+    dubSlug: "hunter-x-hunter-2011-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx11061-vOidvaS88q7Z.jpg",
+    category: "Aventura / Shonen",
+    rating: "9.1",
+    status: "Dublado",
+    description: "Gon Freecss busca se tornar um Hunter para encontrar seu pai desaparecido.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 120, // Fullmetal Alchemist: Brotherhood
+    title: "Fullmetal Alchemist: Brotherhood",
+    tmdbId: "31845",
+    slug: "fullmetal-alchemist-brotherhood",
+    dubSlug: "fullmetal-alchemist-brotherhood-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx5114-KJTCD9r8it6j.jpg",
+    category: "Aventura / Drama",
+    rating: "9.2",
+    status: "Dublado",
+    description: "Dois irmãos buscam a Pedra Filosofal para recuperar seus corpos após um ritual proibido.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 110277, // Hell's Paradise
+    title: "Hell's Paradise",
+    tmdbId: "116480",
+    slug: "jigokuraku",
+    dubSlug: "jigokuraku-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx128893-XvjntmY3yOkq.jpg",
+    category: "Ação / Sobrenatural",
+    rating: "8.4",
+    status: "Dublado",
+    description: "Um ninja condenado busca o elixir da imortalidade em uma ilha misteriosa.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 16498, // Attack on Titan
+    title: "Attack on Titan",
+    tmdbId: "1429",
+    slug: "shingeki-no-kyojin",
+    dubSlug: "shingeki-no-kyojin-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx16498-73pe7m6Z2BR9.jpg",
+    category: "Ação / Drama",
+    rating: "9.1",
+    status: "Dublado",
+    description: "A humanidade luta pela sobrevivência contra gigantes devoradores de homens.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 21087, // One Punch Man
+    title: "One Punch Man",
+    tmdbId: "63926",
+    slug: "one-punch-man",
+    dubSlug: "one-punch-man-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21087-vclZSbm89XpU.jpg",
+    rating: "8.7",
+    category: "Comédia / Ação",
+    status: "Dublado",
+    description: "Saitama é um herói tão forte que derrota qualquer um com apenas um soco.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 113415, // Jujutsu Kaisen
+    title: "Jujutsu Kaisen",
+    tmdbId: "95479",
+    slug: "jujutsu-kaisen",
+    dubSlug: "jujutsu-kaisen-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx113415-bbBWj4biBvcs.jpg",
+    rating: "8.8",
+    category: "Ação / Sobrenatural",
+    status: "Dublado",
+    description: "Yuji Itadori engole um dedo amaldiçoado e entra no perigoso mundo dos feiticeiros jujutsu.",
+    dubbedAvailable: true,
+    type: "serie"
+  },
+  {
+    mediaId: 269, // Bleach
+    title: "Bleach",
+    tmdbId: "30982",
+    slug: "bleach",
+    dubSlug: "bleach-dublado",
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx269-6Kno0L67m7T0.jpg",
+    category: "Ação / Sobrenatural",
+    status: "Dublado",
+    description: "Ichigo Kurosaki ganha poderes de um Shinigami e deve proteger o mundo dos Hollows.",
     dubbedAvailable: true,
     type: "serie"
   },
@@ -161,20 +342,6 @@ const INITIAL_CATALOG = [
     rating: "4.9",
     status: "Lançamento",
     description: "A saga final de Bleach, focada na guerra entre Shinigamis e Quincies.",
-    dubbedAvailable: true,
-    type: "serie"
-  },
-  {
-    mediaId: 97940, // Black Clover
-    title: "Black Clover",
-    tmdbId: "73223",
-    slug: "black-clover",
-    dubSlug: "black-clover-dublado",
-    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx97940-99axS9.jpg",
-    category: "Shonen",
-    rating: "4.7",
-    status: "Popular",
-    description: "Asta e Yuno competem para se tornar o Rei Mago em um mundo de magia.",
     dubbedAvailable: true,
     type: "serie"
   },
@@ -498,11 +665,15 @@ export default function Home() {
 
   const proxyUrl = (url: string) => {
     if (!url) return '';
+    // Don't proxy trusted image CDNs to avoid server load/blocks
+    if (url.includes('ui-avatars.com')) return url;
+
+    // Relative paths from scrapers need the full base URL and proxy
     if (url.startsWith('/')) {
       return `/api/proxy?url=${encodeURIComponent('https://animesonlinecc.to' + url)}`;
     }
-    if (url.includes('ui-avatars.com')) return url;
-    // Proxy AniList too as it might be blocked for some users
+
+    // Proxy AniList and other external URLs to avoid CORS and Referer blocks
     return `/api/proxy?url=${encodeURIComponent(url)}`;
   };
 
@@ -516,6 +687,39 @@ export default function Home() {
     if (videoExtensions.some(ext => lowerUrl.includes(ext) && !lowerUrl.includes('player'))) return false;
     return true; // Default to embed for security and reliability with external sources
   };
+
+  const AnimeCard = ({ anime }: { anime: any }) => (
+    <motion.div
+      whileHover={{ y: -10, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => handleSelectAnime(anime)}
+      className="group cursor-pointer relative"
+    >
+      <div className="aspect-[2/3] rounded-2xl overflow-hidden bg-white/5 border border-white/10 relative shadow-2xl transition-all duration-300 group-hover:border-purple-500/50 group-hover:shadow-purple-500/20">
+        <img
+          src={proxyUrl(anime.image)}
+          alt={anime.title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
+
+        <div className="absolute top-3 left-3 bg-purple-600 px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 backdrop-blur-sm border border-white/20">
+          <Star className="w-3 h-3 text-yellow-300 fill-yellow-300" />
+          {anime.rating}
+        </div>
+
+        <div className="absolute bottom-4 left-4 right-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+          <h3 className="font-bold text-lg leading-tight drop-shadow-lg line-clamp-2">
+            {anime.title}
+          </h3>
+          <p className="text-xs text-purple-300 mt-1 font-medium bg-purple-900/50 w-fit px-2 py-0.5 rounded backdrop-blur-sm">
+            {anime.category}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans">
