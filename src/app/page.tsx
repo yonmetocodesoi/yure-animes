@@ -372,8 +372,8 @@ export default function Home() {
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://superemba.com/embed/movie/${tmdbId}`
-              : `https://superemba.com/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
+              : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         },
         {
