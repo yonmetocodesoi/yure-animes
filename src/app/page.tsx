@@ -483,21 +483,26 @@ export default function Home() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  const fetchEpisode = async (animeSlug?: string, epNum?: string, seaNum?: string, audioType?: 'sub' | 'dub', currentSelected?: any) => {
-    let baseSlug = animeSlug || selectedAnime?.slug;
-    if (baseSlug?.endsWith('-dublado')) baseSlug = baseSlug.replace('-dublado', '');
-
-    const activeAnime = currentSelected || selectedAnime;
-    const currentEp = epNum || episode;
-    const currentSea = seaNum || season;
-    const currentAudio = audioType || audio;
-
-    if (!baseSlug) return;
-
+  const fetchEpisode = async (manualSlug?: string, ep?: string, sea?: string, audioType?: string, currentActiveAnime?: any) => {
     setLoading(true);
     setError(null);
-    setActiveVideo(null);
-    setResults([]);
+    const currentSea = sea || season;
+    const currentEp = ep || episode;
+    const currentAudio = audioType || audio;
+
+    let baseSlug = manualSlug || selectedAnime?.slug;
+    if (baseSlug?.endsWith('-dublado')) baseSlug = baseSlug.replace('-dublado', '');
+
+    const activeAnime = currentActiveAnime || selectedAnime;
+
+    // Se já temos um vídeo e estamos apenas buscando, não limpamos para evitar o "sumiço" do player
+    // Só limpamos se for um anime diferente
+    if (!activeVideo || (currentActiveAnime && currentActiveAnime.mediaId !== selectedAnime?.mediaId)) {
+      setActiveVideo(null);
+      setResults([]);
+    }
+
+    if (!baseSlug) return;
 
     let slugsToTry: string[] = [];
 
@@ -724,7 +729,7 @@ export default function Home() {
       if (firstEp) {
         fetchEpisode(firstEp.slug, '1', '1', 'sub', fullAnime);
       } else {
-        fetchEpisode(anime.slug, '1', '1', 'sub', fullAnime);
+        fetchEpisode(realSlug, '1', '1', 'sub', fullAnime);
       }
     } catch (err) {
       console.error("Selection error:", err);
@@ -988,15 +993,19 @@ export default function Home() {
 
                   <div className="glass-card overflow-hidden aspect-video relative bg-black">
                     {loading && (
-                      <div className="absolute inset-0 z-20 bg-black/80 flex flex-col items-center justify-center gap-4">
-                        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                        <span className="text-sm font-bold tracking-widest uppercase animate-pulse">Sincronizando fonte...</span>
+                      <div className={`absolute inset-0 z-20 ${activeVideo ? 'bg-black/40' : 'bg-black/80'} flex flex-col items-center justify-center gap-4 transition-all duration-500`}>
+                        <div className="relative">
+                          <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                          <div className="absolute inset-0 w-12 h-12 border-4 border-primary/20 rounded-full"></div>
+                        </div>
+                        <span className="text-sm font-black tracking-widest uppercase animate-pulse drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]">Sincronizando fonte...</span>
                       </div>
                     )}
 
                     {activeVideo ? (
                       isEmbed(activeVideo) ? (
                         <iframe
+                          key={activeVideo}
                           src={activeVideo}
                           className="w-full h-full border-0 shadow-2xl"
                           allowFullScreen
