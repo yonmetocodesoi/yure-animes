@@ -350,27 +350,27 @@ export default function Home() {
           const isMovie = currentAnime.type === 'movie';
           const cloudResults = [
             {
-              name: 'Multi-Server (Estável)',
+              name: 'Servidor Global 1 (HD)',
               slug: 'stable-1',
               has_ads: true,
               is_embed: true,
               episodes: [{
                 error: false,
                 episode: isMovie
-                  ? `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`
-                  : `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&sea=${currentSea}&epi=${currentEp}`
+                  ? `https://vidsrc.to/embed/movie/${tmdbId}`
+                  : `https://vidsrc.to/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
               }]
             },
             {
-              name: 'Player Premium (Bypass)',
+              name: 'Servidor Global 2 (Bypass)',
               slug: 'stable-2',
               has_ads: false,
               is_embed: true,
               episodes: [{
                 error: false,
                 episode: isMovie
-                  ? `https://superemba.com/tv/movie/${tmdbId}`
-                  : `https://superemba.com/tv/anime/${tmdbId}/${currentSea}/${currentEp}`
+                  ? `https://vidsrc.xyz/embed/movie/${tmdbId}`
+                  : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
               }]
             }
           ];
