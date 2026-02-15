@@ -619,12 +619,8 @@ export default function Home() {
   const [dubbedAnimes, setDubbedAnimes] = useState<any[]>([]);
 
   // Fetch dynamic catalog from AniList (GraphQL) - Better quality images and integrated data
+  // Fetch dynamic catalog from AniList (GraphQL) - Premium data only
   useEffect(() => {
-    // 1. Initial Load from local data to ensure it's not empty
-    setTrendingAnimes(INITIAL_CATALOG.slice(0, 10));
-    setPopularAnimes(INITIAL_CATALOG.slice(10, 20));
-    setDubbedAnimes(INITIAL_CATALOG.filter(a => a.dubbedAvailable));
-
     const fetchCatalog = async () => {
       const query = `
         query {
@@ -640,7 +636,7 @@ export default function Home() {
               status
             }
           }
-          popular: Page(page: 1, perPage: 15) {
+          popular: Page(page: 1, perPage: 12) {
             media(sort: POPULAR_DESC, type: ANIME, isAdult: false) {
               id
               title { romaji english }
@@ -650,7 +646,7 @@ export default function Home() {
               description
             }
           }
-          dubbed: Page(page: 1, perPage: 15) {
+          dubbed: Page(page: 1, perPage: 12) {
             media(sort: SCORE_DESC, type: ANIME, countryOfOrigin: "JP", isAdult: false) {
               id
               title { romaji english }
@@ -673,33 +669,26 @@ export default function Home() {
         if (!response.ok) throw new Error("AniList request failed");
 
         const result = await response.json();
-        const data = result.data;
 
-        if (!data || !data.trending || !data.popular) return;
+        if (result.data) {
+          const mapAniList = (list: any[]) => list.map(a => ({
+            title: a.title.english || a.title.romaji,
+            mediaId: a.id,
+            slug: (a.title.english || a.title.romaji).toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, ''),
+            image: a.coverImage.extraLarge || a.coverImage.large,
+            rating: (a.averageScore / 10).toFixed(1),
+            category: a.genres[0] || 'Anime',
+            status: a.status || 'Finalizado',
+            description: a.description?.replace(/<[^>]*>/g, '') || 'Assista a este anime incrível agora mesmo no Sugoi Online.',
+            type: 'serie'
+          }));
 
-        const mapAniList = (list: any[]) => list.map(a => ({
-          title: a.title.english || a.title.romaji,
-          mediaId: a.id,
-          slug: (a.title.english || a.title.romaji).toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, ''),
-          image: a.coverImage.extraLarge || a.coverImage.large,
-          rating: (a.averageScore / 10).toFixed(1),
-          category: a.genres[0] || 'Anime',
-          status: a.status || 'Finalizado',
-          description: a.description?.replace(/<[^>]*>/g, '') || '',
-          type: 'serie'
-        }));
-
-        const mappedTrending = mapAniList(data.trending.media);
-        if (mappedTrending.length > 0) setTrendingAnimes(mappedTrending);
-
-        const mappedPopular = mapAniList(data.popular.media);
-        if (mappedPopular.length > 0) setPopularAnimes(mappedPopular);
-
-        const dubbedFromAniList = data.dubbed ? mapAniList(data.dubbed.media) : [];
-        setDubbedAnimes([...INITIAL_CATALOG.filter(a => a.dubbedAvailable), ...dubbedFromAniList].slice(0, 15));
-
+          setTrendingAnimes(mapAniList(result.data.trending.media));
+          setPopularAnimes(mapAniList(result.data.popular.media));
+          setDubbedAnimes(mapAniList(result.data.dubbed.media));
+        }
       } catch (err) {
-        console.error("AniList Fetch Error - Staying with local fallback:", err);
+        console.error("AniList Fetch Error:", err);
       }
     };
     fetchCatalog();
@@ -773,13 +762,10 @@ export default function Home() {
   const proxyUrl = (url: string) => {
     if (!url) return 'https://placehold.co/400x600/1a1a1a/ffffff?text=Sugoi+Anime';
 
-    // AniList and MyAnimeList images usually work fine directly if the user is on mobile/browser
-    // In Brazil, these CDNs are usually not blocked by ISP, but sometimes by Referer.
-    // We send directly to avoid unnecessary double-load via proxy unless needed.
-    if (url.includes('anilist.co') || url.includes('myanimelist.net')) return url;
-
-    // Use images.weserv.nl for reliable global image proxying for other sources
-    return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp`;
+    // Always use weserv for images with security and quality flags
+    // This is the most reliable way to bypass referrer blocks globally
+    const cleanUrl = url.replace(/^https?:\/\//, '');
+    return `https://images.weserv.nl/?url=https://${cleanUrl}&w=500&output=webp&q=80`;
   };
 
   const getProxyUrl = (url: string) => proxyUrl(url);
