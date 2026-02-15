@@ -688,7 +688,7 @@ export default function Home() {
                     <ArrowLeft className="w-4 h-4" /> Voltar para o catálogo
                   </button>
 
-                  <div className="glass-card overflow-hidden aspect-video relative bg-black select-none">
+                  <div className="glass-card overflow-hidden aspect-video relative bg-black">
                     {loading && (
                       <div className="absolute inset-0 z-20 bg-black/80 flex flex-col items-center justify-center gap-4">
                         <Loader2 className="w-12 h-12 text-primary animate-spin" />
