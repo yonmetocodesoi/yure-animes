@@ -100,14 +100,14 @@ export async function GET(
 
     const results = [
         {
-            name: 'VIP Ultra [BRASIL] 1',
+            name: 'VIP MASTER [BRASIL] 1',
             slug: 'anime-fire',
             has_ads: false,
             is_embed: false,
             episodes: [fire]
         },
         {
-            name: 'VIP Ultra [BRASIL] 2',
+            name: 'VIP MASTER [BRASIL] 2',
             slug: 'animes-online-cc',
             has_ads: false,
             is_embed: true,
