@@ -482,11 +482,11 @@ export default function Home() {
     }
   };
 
-  const resolveTmdbId = async (title: string) => {
+  const resolveTmdbId = async (title: string, type: string = 'multi') => {
     try {
-      const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=15d1a9983d3246a1adb2a4d048497274&query=${encodeURIComponent(title)}&language=pt-BR`);
+      const res = await fetch(`/api/tmdb?q=${encodeURIComponent(title)}&type=${type}`);
       const data = await res.json();
-      return data.results?.[0]?.id || null;
+      return data.id || null;
     } catch (e) {
       return null;
     }
@@ -498,61 +498,61 @@ export default function Home() {
     setActiveVideo(null);
     setResults([]);
 
+    const isMovie = anime.type === 'movie' || anime.format === 'MOVIE';
     let tmdbId = anime.tmdbId;
+
     if (!tmdbId && anime.title) {
-      tmdbId = await resolveTmdbId(anime.title);
+      tmdbId = await resolveTmdbId(anime.title, isMovie ? 'movie' : 'tv');
+      if (!tmdbId) tmdbId = await resolveTmdbId(anime.title, 'multi');
     }
 
     if (anime.mediaId || tmdbId) {
-      const isMovie = anime.type === 'movie';
       const fullAnime = { ...anime, tmdbId };
       setSelectedAnime(fullAnime);
       setSeason('1');
       setEpisode('1');
       setAudio('sub');
       setView('watch');
+
+      // If it's a search result from Animes Online CC, it might need extra details
+      if (anime.slug && !anime.mediaId && !anime.tmdbId) {
+        try {
+          const res = await fetch(`/api/details/${anime.slug}`);
+          const data = await res.json();
+          if (!data.error) {
+            const updatedAnime = {
+              ...fullAnime,
+              seasons: data.data.seasons,
+              description: data.data.synopsis,
+              isGlobal: true
+            };
+            setSelectedAnime(updatedAnime);
+            const firstEp = data.data.seasons[0]?.episodes[0];
+            fetchEpisode(firstEp?.slug || anime.slug, '1', '1', 'sub', tmdbId, isMovie);
+            return;
+          }
+        } catch (e) { }
+      }
+
       fetchEpisode(anime.slug, '1', '1', 'sub', tmdbId, isMovie);
     } else {
-      // Logic for global search results from Animes Online CC
-      try {
-        const res = await fetch(`/api/details/${anime.slug}`);
-        const data = await res.json();
-        if (!data.error) {
-          const fetchedTmdbId = await resolveTmdbId(data.data.title || anime.title);
-          const isMovie = anime.type === 'movie';
-          const fullAnime = {
-            ...anime,
-            tmdbId: fetchedTmdbId,
-            seasons: data.data.seasons,
-            description: data.data.synopsis,
-            isGlobal: true
-          };
-          setSelectedAnime(fullAnime);
-          setSeason('1');
-          setEpisode('1');
-          setView('watch');
-
-          const firstSeason = data.data.seasons[0];
-          const firstEp = firstSeason?.episodes[0];
-          fetchEpisode(firstEp?.slug || anime.slug, '1', '1', 'sub', fetchedTmdbId, isMovie);
-        } else {
-          setError("Não foi possível carregar os detalhes.");
-        }
-      } catch (err) {
-        setError("Erro ao carregar detalhes.");
-      } finally {
-        setLoading(false);
-      }
+      setError("Não foi possível localizar este anime nos servidores.");
+      setLoading(false);
     }
   };
 
   const proxyUrl = (url: string) => {
     if (!url) return '';
+    // If it's already a proxy or a local path, don't double proxy
+    if (url.includes('/api/proxy') || url.startsWith('blob:') || url.startsWith('data:')) return url;
+
     if (url.startsWith('/')) {
       return `/api/proxy?url=${encodeURIComponent('https://animesonlinecc.to' + url)}`;
     }
+
     if (url.includes('ui-avatars.com')) return url;
-    // Proxy ALL external images/resources to solve OpaqueResponseBlocking
+
+    // Proxy ALL external images/resources to solve OpaqueResponseBlocking/CORS
     return `/api/proxy?url=${encodeURIComponent(url)}`;
   };
 
