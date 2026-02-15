@@ -618,43 +618,76 @@ export default function Home() {
   const [popularAnimes, setPopularAnimes] = useState<any[]>([]);
   const [dubbedAnimes, setDubbedAnimes] = useState<any[]>([]);
 
-  // Fetch dynamic catalog from Jikan API (MyAnimeList)
+  // Fetch dynamic catalog from AniList (GraphQL) - Better quality images and integrated data
   useEffect(() => {
     const fetchCatalog = async () => {
+      const query = `
+        query {
+          trending: Page(page: 1, perPage: 15) {
+            media(sort: TRENDING_DESC, type: ANIME, isAdult: false) {
+              id
+              title { romaji english }
+              coverImage { extraLarge large }
+              bannerImage
+              averageScore
+              genres
+              description
+              status
+            }
+          }
+          popular: Page(page: 1, perPage: 15) {
+            media(sort: POPULAR_DESC, type: ANIME, isAdult: false) {
+              id
+              title { romaji english }
+              coverImage { extraLarge large }
+              averageScore
+              genres
+              description
+            }
+          }
+          dubbed: Page(page: 1, perPage: 15) {
+            media(sort: SCORE_DESC, type: ANIME, countryOfOrigin: "JP", isAdult: false) {
+              id
+              title { romaji english }
+              coverImage { extraLarge large }
+              averageScore
+              genres
+              description
+            }
+          }
+        }
+      `;
+
       try {
-        // 1. Trending
-        const resTop = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=15');
-        const dataTop = await resTop.json();
-        const mappedTop = dataTop.data.map((a: any) => ({
-          title: a.title,
-          slug: a.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, ''),
-          tmdbId: '', // Placeholder, will be resolved on click
-          image: a.images.jpg.large_image_url,
-          rating: a.score || '0.0',
-          category: a.genres[0]?.name || 'Anime',
-          status: a.status,
-          description: a.synopsis,
+        const response = await fetch('https://graphql.anilist.co', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const result = await response.json();
+        const data = result.data;
+
+        const mapAniList = (list: any[]) => list.map(a => ({
+          title: a.title.english || a.title.romaji,
+          mediaId: a.id,
+          slug: (a.title.english || a.title.romaji).toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, ''),
+          image: a.coverImage.extraLarge || a.coverImage.large,
+          rating: (a.averageScore / 10).toFixed(1),
+          category: a.genres[0] || 'Anime',
+          status: a.status || 'Finalizado',
+          description: a.description?.replace(/<[^>]*>/g, '') || '',
           type: 'serie'
         }));
-        setTrendingAnimes(mappedTop);
 
-        // 2. Popular All Time
-        const resPop = await fetch('https://api.jikan.moe/v4/top/anime?limit=15');
-        const dataPop = await resPop.json();
-        setPopularAnimes(dataPop.data.map((a: any) => ({
-          title: a.title,
-          slug: a.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, ''),
-          image: a.images.jpg.large_image_url,
-          rating: a.score || '0.0',
-          category: a.genres[0]?.name || 'Anime',
-          type: 'serie'
-        })));
+        setTrendingAnimes(mapAniList(data.trending.media));
+        setPopularAnimes(mapAniList(data.popular.media));
 
-        // 3. Just for show, use some of INITIAL_CATALOG for Dubbed row
-        setDubbedAnimes(INITIAL_CATALOG.filter(a => a.dubbedAvailable));
+        // Use a mix of static known-dubbed and high-rated from AniList
+        const dubbedFromAniList = mapAniList(data.dubbed.media);
+        setDubbedAnimes([...INITIAL_CATALOG.filter(a => a.dubbedAvailable), ...dubbedFromAniList].slice(0, 15));
 
       } catch (err) {
-        console.error("Catalog fetch error:", err);
+        console.error("AniList Fetch Error:", err);
       }
     };
     fetchCatalog();
@@ -726,14 +759,14 @@ export default function Home() {
   };
 
   const proxyUrl = (url: string) => {
-    if (!url) return 'https://placehold.co/400x600/1a1a1a/ffffff?text=No+Image';
+    if (!url) return 'https://placehold.co/400x600/1a1a1a/ffffff?text=Sugoi+Anime';
 
     // AniList and MyAnimeList images usually work fine directly if the user is on mobile/browser
-    if (url.includes('anilist.co') || url.includes('myanimelist.net') || url.includes('jikan.moe')) {
-      return url;
-    }
+    // In Brazil, these CDNs are usually not blocked by ISP, but sometimes by Referer.
+    // We send directly to avoid unnecessary double-load via proxy unless needed.
+    if (url.includes('anilist.co') || url.includes('myanimelist.net')) return url;
 
-    // Use weserv for everything else (like scraper images)
+    // Use images.weserv.nl for reliable global image proxying for other sources
     return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp`;
   };
 
@@ -755,25 +788,28 @@ export default function Home() {
       onClick={() => handleSelectAnime(anime)}
       className="group cursor-pointer relative"
     >
-      <div className="aspect-[2/3] rounded-2xl overflow-hidden bg-white/5 border border-white/10 relative shadow-2xl transition-all duration-300 group-hover:border-purple-500/50 group-hover:shadow-purple-500/20">
+      <div className="aspect-[2/3] rounded-2xl overflow-hidden bg-[#1a1a1a] border border-white/10 relative shadow-2xl transition-all duration-300 group-hover:border-purple-500/50 group-hover:shadow-purple-500/20">
         <img
           src={proxyUrl(anime.image)}
           alt={anime.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
+          onError={(e: any) => {
+            e.target.src = 'https://placehold.co/400x600/1a1a1a/ffffff?text=Sugoi+Anime';
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
 
-        <div className="absolute top-3 left-3 bg-purple-600 px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 backdrop-blur-sm border border-white/20">
-          <Star className="w-3 h-3 text-yellow-300 fill-yellow-300" />
+        <div className="absolute top-3 left-3 bg-purple-600 px-3 py-1 rounded-full text-[10px] font-black shadow-lg flex items-center gap-1 backdrop-blur-sm border border-white/20">
+          <Star className="w-2.5 h-2.5 text-yellow-300 fill-yellow-300" />
           {anime.rating}
         </div>
 
         <div className="absolute bottom-4 left-4 right-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-          <h3 className="font-bold text-lg leading-tight drop-shadow-lg line-clamp-2">
+          <h3 className="font-bold text-sm leading-tight drop-shadow-lg line-clamp-2">
             {anime.title}
           </h3>
-          <p className="text-xs text-purple-300 mt-1 font-medium bg-purple-900/50 w-fit px-2 py-0.5 rounded backdrop-blur-sm">
+          <p className="text-[10px] text-purple-300 mt-1 font-bold bg-purple-900/50 w-fit px-2 py-0.5 rounded backdrop-blur-sm uppercase tracking-tighter">
             {anime.category}
           </p>
         </div>
