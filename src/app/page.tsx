@@ -347,22 +347,44 @@ export default function Home() {
     try {
       let foundData = null;
 
-      // 1. Tentar o Servidor Cloud (Render - acessível por todos!)
-      const CLOUD_SERVER = 'https://serveranimesite.onrender.com';
-      for (const s of slugsToTry) {
-        try {
-          const cloudRes = await fetch(`${CLOUD_SERVER}/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
-          if (cloudRes.ok) {
-            const cloudData = await cloudRes.json();
-            if (cloudData.data && cloudData.data.length > 0) {
-              foundData = cloudData.data.map((r: any) => ({ ...r, name: `Local (Render) - ${r.name}` }));
-              if (cloudData.tmdbId && activeAnime && !activeAnime.tmdbId) {
-                setSelectedAnime({ ...activeAnime, tmdbId: cloudData.tmdbId });
+      // 1. Tentar o Servidor Local (PC) - Prioridade para o celular acessar
+      try {
+        const LOCAL_SERVER = 'http://172.16.0.9:1010'; // IP do seu PC
+        for (const s of slugsToTry) {
+          const localRes = await fetch(`${LOCAL_SERVER}/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
+          if (localRes.ok) {
+            const localData = await localRes.json();
+            if (localData.data && localData.data.length > 0) {
+              foundData = localData.data.map((r: any) => ({ ...r, name: `PC Local - ${r.name}` }));
+              if (localData.tmdbId && activeAnime && !activeAnime.tmdbId) {
+                setSelectedAnime({ ...activeAnime, tmdbId: localData.tmdbId });
               }
               break;
             }
           }
-        } catch (e) { }
+        }
+      } catch (e) {
+        // Ignora erro se o servidor local não estiver rodando
+      }
+
+      if (!foundData) {
+        // 2. Tentar o Servidor Cloud (Render - acessível por todos!)
+        const CLOUD_SERVER = 'https://serveranimesite.onrender.com';
+        for (const s of slugsToTry) {
+          try {
+            const cloudRes = await fetch(`${CLOUD_SERVER}/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
+            if (cloudRes.ok) {
+              const cloudData = await cloudRes.json();
+              if (cloudData.data && cloudData.data.length > 0) {
+                foundData = cloudData.data.map((r: any) => ({ ...r, name: `Local (Render) - ${r.name}` }));
+                if (cloudData.tmdbId && activeAnime && !activeAnime.tmdbId) {
+                  setSelectedAnime({ ...activeAnime, tmdbId: cloudData.tmdbId });
+                }
+                break;
+              }
+            }
+          } catch (e) { }
+        }
       }
 
       // 2. Fallback: API interna do Netlify
