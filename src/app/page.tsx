@@ -618,80 +618,60 @@ export default function Home() {
   const [popularAnimes, setPopularAnimes] = useState<any[]>([]);
   const [dubbedAnimes, setDubbedAnimes] = useState<any[]>([]);
 
-  // Fetch dynamic catalog from AniList (GraphQL) - Better quality images and integrated data
-  // Fetch dynamic catalog from AniList (GraphQL) - Premium data only
+  // Fetch dynamic catalog from Jikan API (MyAnimeList) - User requested
   useEffect(() => {
+    // 1. Initial Load from local data immediately so the page is never empty
+    setTrendingAnimes(INITIAL_CATALOG.slice(0, 10));
+    setPopularAnimes(INITIAL_CATALOG.slice(10, 20));
+    setDubbedAnimes(INITIAL_CATALOG.filter(a => a.dubbedAvailable));
+
     const fetchCatalog = async () => {
-      const query = `
-        query {
-          trending: Page(page: 1, perPage: 15) {
-            media(sort: TRENDING_DESC, type: ANIME, isAdult: false) {
-              id
-              title { romaji english }
-              coverImage { extraLarge large }
-              bannerImage
-              averageScore
-              genres
-              description
-              status
-            }
-          }
-          popular: Page(page: 1, perPage: 12) {
-            media(sort: POPULAR_DESC, type: ANIME, isAdult: false) {
-              id
-              title { romaji english }
-              coverImage { extraLarge large }
-              averageScore
-              genres
-              description
-            }
-          }
-          dubbed: Page(page: 1, perPage: 12) {
-            media(sort: SCORE_DESC, type: ANIME, countryOfOrigin: "JP", isAdult: false) {
-              id
-              title { romaji english }
-              coverImage { extraLarge large }
-              averageScore
-              genres
-              description
-            }
-          }
-        }
-      `;
-
       try {
-        const response = await fetch('https://graphql.anilist.co', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query })
-        });
+        // 1. Trending (Airing)
+        const resTrending = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=15');
+        const dataTrending = await resTrending.json();
 
-        if (!response.ok) throw new Error("AniList request failed");
+        // 2. Popular
+        const resPopular = await fetch('https://api.jikan.moe/v4/top/anime?limit=15');
+        const dataPopular = await resPopular.json();
 
-        const result = await response.json();
+        // 3. Dubbed row mix (High rated/Popular)
+        const resDubbed = await fetch('https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=12');
+        const dataDubbed = await resDubbed.json();
 
-        if (result.data) {
-          const mapAniList = (list: any[]) => list.map(a => ({
-            title: a.title.english || a.title.romaji,
-            mediaId: a.id,
-            slug: (a.title.english || a.title.romaji).toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, ''),
-            image: a.coverImage.extraLarge || a.coverImage.large,
-            rating: (a.averageScore / 10).toFixed(1),
-            category: a.genres[0] || 'Anime',
-            status: a.status || 'Finalizado',
-            description: a.description?.replace(/<[^>]*>/g, '') || 'Assista a este anime incrível agora mesmo no Sugoi Online.',
-            type: 'serie'
-          }));
+        const mapJikan = (list: any[]) => list.map(a => ({
+          title: a.title_english || a.title,
+          slug: (a.title_english || a.title).toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, ''),
+          image: a.images.jpg.large_image_url,
+          rating: a.score ? a.score.toFixed(1) : '8.5',
+          category: a.genres[0]?.name || 'Anime',
+          status: a.status || 'Finalizado',
+          description: a.synopsis?.replace(/\[Written by MAL Rewrite\]/g, '') || 'Assista a este anime incrível no Sugoi Online.',
+          type: 'serie'
+        }));
 
-          setTrendingAnimes(mapAniList(result.data.trending.media));
-          setPopularAnimes(mapAniList(result.data.popular.media));
-          setDubbedAnimes(mapAniList(result.data.dubbed.media));
+        if (dataTrending.data && dataTrending.data.length > 0) {
+          setTrendingAnimes(mapJikan(dataTrending.data));
         }
+
+        if (dataPopular.data && dataPopular.data.length > 0) {
+          setPopularAnimes(mapJikan(dataPopular.data));
+        }
+
+        if (dataDubbed.data && dataDubbed.data.length > 0) {
+          const mappedDubbed = mapJikan(dataDubbed.data);
+          // Combine local known dubbed with API discovered ones
+          setDubbedAnimes([...INITIAL_CATALOG.filter(a => a.dubbedAvailable), ...mappedDubbed].slice(0, 15));
+        }
+
       } catch (err) {
-        console.error("AniList Fetch Error:", err);
+        console.error("Jikan Fetch Error:", err);
       }
     };
-    fetchCatalog();
+
+    // Delay to let initial catalog show first and avoid rate limiting
+    const timer = setTimeout(fetchCatalog, 800);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSelectAnime = async (anime: any) => {
