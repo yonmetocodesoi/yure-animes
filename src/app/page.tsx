@@ -377,15 +377,15 @@ export default function Home() {
           }]
         },
         {
-          name: 'VIP MASTER Vizer [BR]',
+          name: 'VIP MASTER Superflix [BR]',
           slug: 'stable-2',
           has_ads: true,
           is_embed: true,
           episodes: [{
             error: false,
             episode: isMovie
-              ? `https://vizer.tv/embed/movie/${tmdbId}`
-              : `https://vizer.tv/embed/serie/${tmdbId}/${currentSea}/${currentEp}`
+              ? `https://superflixapi.top/filme/${tmdbId}`
+              : `https://superflixapi.top/serie/${tmdbId}/${currentSea}/${currentEp}`
           }]
         },
         {
@@ -493,7 +493,7 @@ export default function Home() {
 
   const isEmbed = (url: string) => {
     if (!url) return false;
-    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed', 'smashy'];
+    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed', 'warezcdn', 'superflix', 'autoembed', 'multiembed', 'smashy', 'superflixapi'];
     return embeds.some(e => url.includes(e));
   };
 
