@@ -410,7 +410,7 @@ export default function Home() {
 
   const isEmbed = (url: string) => {
     if (!url) return false;
-    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom'];
+    const embeds = ['iframe', 'animesonline', 'blogger.com', 'google.com/video.g', 'youtube.com', 'player', 'vidmoly', 'autom', 'vidsrc', 'superemba', 'embed'];
     return embeds.some(e => url.includes(e));
   };
 
