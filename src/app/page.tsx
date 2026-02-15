@@ -349,13 +349,13 @@ export default function Home() {
 
       // 1. Tentar o Servidor Local (PC) - Prioridade para o celular acessar
       try {
-        const LOCAL_SERVER = 'http://172.16.0.9:1010'; // IP do seu PC
+        const LOCAL_SERVER = 'https://yure-anime-api.loca.lt'; // Seu túnel persistente
         for (const s of slugsToTry) {
           const localRes = await fetch(`${LOCAL_SERVER}/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
           if (localRes.ok) {
             const localData = await localRes.json();
             if (localData.data && localData.data.length > 0) {
-              foundData = localData.data.map((r: any) => ({ ...r, name: `PC Local - ${r.name}` }));
+              foundData = localData.data.map((r: any) => ({ ...r, name: `PC Local (Túnel) - ${r.name}` }));
               if (localData.tmdbId && activeAnime && !activeAnime.tmdbId) {
                 setSelectedAnime({ ...activeAnime, tmdbId: localData.tmdbId });
               }
