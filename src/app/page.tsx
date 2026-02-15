@@ -412,7 +412,7 @@ export default function Home() {
               : `https://vidsrc.xyz/embed/tv/${tmdbId}/${currentSea}/${currentEp}`
           }]
         }
-      ] : [];
+      ] : []; // Build trigger: $(new Date().getTime()) 
 
       if (foundData) {
         setResults([...foundData, ...cloudFallbacks]);
