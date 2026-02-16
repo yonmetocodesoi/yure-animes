@@ -504,82 +504,51 @@ export default function Home() {
 
     if (!baseSlug) return;
 
-    let slugsToTry: string[] = [];
-
-    if (currentAudio === 'dub') {
-      const explicitDubSlug = activeAnime?.dubSlug || animeList.find((a: any) => a.slug === baseSlug)?.dubSlug;
-      if (explicitDubSlug) slugsToTry.push(explicitDubSlug);
-
-      slugsToTry.push(`${baseSlug}-dublado`);
-      slugsToTry.push(`${baseSlug}-dub`);
-    } else {
-      slugsToTry.push(baseSlug);
-    }
-
     try {
       let foundData = null;
 
-      // 1. Tentar o Servidor Local (PC) - Prioridade para o celular acessar
+      // 1. Tentar o Servidor Local (PC) - Agora o servidor faz a busca inteligente sozinho
       try {
-        const LOCAL_SERVER = 'https://sugoi-br-api.loca.lt'; // Novo túnel estável
-        for (const s of slugsToTry) {
-          const localRes = await fetch(`${LOCAL_SERVER}/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
-          if (localRes.ok) {
-            const localData = await localRes.json();
-            if (localData.data && localData.data.length > 0) {
-              foundData = localData.data.map((r: any) => ({ ...r, name: `VIP MASTER BR - ${r.name}` }));
-              if (localData.tmdbId && activeAnime && !activeAnime.tmdbId) {
-                setSelectedAnime({ ...activeAnime, tmdbId: localData.tmdbId });
-              }
-              break;
+        const LOCAL_SERVER = 'https://sugoi-br-api.loca.lt';
+        const localRes = await fetch(`${LOCAL_SERVER}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
+        if (localRes.ok) {
+          const localData = await localRes.json();
+          if (localData.data && localData.data.length > 0) {
+            foundData = localData.data.map((r: any) => ({ ...r, name: `VIP MASTER BR - ${r.name}` }));
+            if (localData.tmdbId && activeAnime && !activeAnime.tmdbId) {
+              setSelectedAnime({ ...activeAnime, tmdbId: localData.tmdbId });
             }
           }
         }
-      } catch (e) {
-        // Ignora erro se o servidor local não estiver rodando
-      }
+      } catch (e) { /* server offline */ }
 
       if (!foundData) {
-        // 2. Tentar o Servidor Cloud (Render - acessível por todos!)
+        // 2. Tentar o Servidor Cloud (Render)
         const CLOUD_SERVER = 'https://serveranimesite.onrender.com';
-        for (const s of slugsToTry) {
-          try {
-            const cloudRes = await fetch(`${CLOUD_SERVER}/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
-            if (cloudRes.ok) {
-              const cloudData = await cloudRes.json();
-              if (cloudData.data && cloudData.data.length > 0) {
-                foundData = cloudData.data.map((r: any) => ({ ...r, name: `Local (Render) - ${r.name}` }));
-                if (cloudData.tmdbId && activeAnime && !activeAnime.tmdbId) {
-                  setSelectedAnime({ ...activeAnime, tmdbId: cloudData.tmdbId });
-                }
-                break;
-              }
+        try {
+          const cloudRes = await fetch(`${CLOUD_SERVER}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
+          if (cloudRes.ok) {
+            const cloudData = await cloudRes.json();
+            if (cloudData.data && cloudData.data.length > 0) {
+              foundData = cloudData.data.map((r: any) => ({ ...r, name: `Cloud Master - ${r.name}` }));
             }
-          } catch (e) { }
-        }
+          }
+        } catch (e) { }
       }
 
-      // 2. Fallback: API interna do Netlify
       if (!foundData) {
-        for (const s of slugsToTry) {
-          try {
-            const res = await fetch(`/api/episode/${s}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
-            const data = await res.json();
-            if (data.data && data.data.length > 0) {
-              foundData = data.data;
-              if (data.tmdbId && activeAnime && !activeAnime.tmdbId) {
-                setSelectedAnime({ ...activeAnime, tmdbId: data.tmdbId });
-              }
-              break;
-            }
-          } catch (e) { }
-        }
+        // 3. Fallback Netlify API
+        try {
+          const res = await fetch(`/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
+          const data = await res.json();
+          if (data.data && data.data.length > 0) foundData = data.data;
+        } catch (e) { }
       }
 
       if (foundData && foundData.length > 0) {
         setResults(foundData);
-        const first = foundData.find((r: any) => r.episodes[0] && !r.episodes[0].error && r.episodes[0].episode);
-        if (first) setActiveVideo(first.episodes[0].episode);
+        const valid = foundData.find((r: any) => r.episodes[0] && !r.episodes[0].error && r.episodes[0].episode);
+        if (valid) setActiveVideo(valid.episodes[0].episode);
         else setActiveVideo(foundData[0].episodes[0].episode);
       } else {
         setError(currentAudio === 'dub' ? 'Versão dublada não encontrada.' : 'Episódio não encontrado.');
@@ -680,6 +649,7 @@ export default function Home() {
   }, []);
 
   const handleSelectAnime = async (anime: any) => {
+    if (loading) return; // Evita múltiplas chamadas simultâneas
     setLoading(true);
     setError(null);
     try {
