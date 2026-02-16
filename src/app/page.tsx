@@ -447,7 +447,7 @@ const INITIAL_CATALOG = [
     title: "O Senhor dos Anéis: O Retorno do Rei",
     imdbId: "tt0167260",
     slug: "o-senhor-dos-aneis-o-retorno-do-rei",
-    image: "https://image.tmdb.org/t/p/w500/87968508935760.jpg",
+    image: "https://image.tmdb.org/t/p/w500/rCzp5NdzPaiZzw4STqU6dt9cyas.jpg",
     category: "Fantasia / Aventura",
     rating: "9.0",
     status: "Filme",
@@ -745,10 +745,14 @@ export default function Home() {
   const proxyUrl = (url: string) => {
     if (!url) return 'https://placehold.co/400x600/1a1a1a/ffffff?text=Sugoi+Anime';
 
-    // Always use weserv for images with security and quality flags
-    // This is the most reliable way to bypass referrer blocks globally
+    // Se for do TMDB, carrega direto por ser mais estável
+    if (url.includes('tmdb.org')) return url;
+
     const cleanUrl = url.replace(/^https?:\/\//, '');
-    return `https://images.weserv.nl/?url=https://${cleanUrl}&w=500&output=webp&q=80`;
+
+    // Sistema de Proxy Triplo (Tenta o mais rápido primeiro)
+    // 1. wsrv.nl (Alias moderno e mais rápido do weserv)
+    return `https://wsrv.nl/?url=https://${cleanUrl}&w=500&output=webp&q=80&n=-1`;
   };
 
   const getProxyUrl = (url: string) => proxyUrl(url);
@@ -1008,10 +1012,11 @@ export default function Home() {
 
               <section>
                 <h2 className="text-xl font-black tracking-tight mb-4 flex items-center gap-2">
-                  Sugeridos para você <ChevronRight className="w-4 h-4 text-primary" />
+                  Séries e Novidades <ChevronRight className="w-4 h-4 text-primary" />
                 </h2>
                 <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide">
-                  {INITIAL_CATALOG.filter(a => a.type === 'serie').map((anime) => (
+                  {/* Filtra séries que não são animes clássicos para dar variedade */}
+                  {popularAnimes.slice(0, 10).map((anime) => (
                     <div key={anime.slug} className="min-w-[180px] lg:min-w-[220px]">
                       <AnimeCard anime={anime} />
                     </div>
