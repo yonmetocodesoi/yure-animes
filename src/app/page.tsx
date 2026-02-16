@@ -441,11 +441,35 @@ const INITIAL_CATALOG = [
     description: "Um cientista excêntrico descobre acidentalmente uma maneira de enviar mensagens para o passado.",
     dubbedAvailable: false,
     type: "serie"
+  },
+  {
+    mediaId: 100001,
+    title: "O Senhor dos Anéis: O Retorno do Rei",
+    imdbId: "tt0167260",
+    slug: "o-senhor-dos-aneis-o-retorno-do-rei",
+    image: "https://image.tmdb.org/t/p/w500/87968508935760.jpg",
+    category: "Fantasia / Aventura",
+    rating: "9.0",
+    status: "Filme",
+    description: "Frodo e Sam continuam sua jornada para destruir o Um Anel enquanto Aragorn lidera o mundo dos homens contra Sauron.",
+    type: "movie"
+  },
+  {
+    mediaId: 100002,
+    title: "Interestelar",
+    imdbId: "tt0816692",
+    slug: "interestelar",
+    image: "https://image.tmdb.org/t/p/w500/gEU2QniE6EwfVDxCST29CgqbpYn.jpg",
+    category: "Ficção Científica",
+    rating: "8.7",
+    status: "Filme",
+    description: "Um grupo de exploradores viaja através de um buraco de minhoca no espaço na tentativa de garantir a sobrevivência da humanidade.",
+    type: "movie"
   }
 ];
 
 export default function Home() {
-  const [view, setView] = useState<'catalog' | 'watch'>('catalog');
+  const [view, setView] = useState<'catalog' | 'watch' | 'movies'>('catalog');
   // Initialize with the static catalog, but it will be updated by the effect
   const [animeList, setAnimeList] = useState(INITIAL_CATALOG);
   const [selectedAnime, setSelectedAnime] = useState<any>(null);
@@ -510,7 +534,8 @@ export default function Home() {
       // 1. Tentar o Servidor Local (PC) - Agora o servidor faz a busca inteligente sozinho
       try {
         const LOCAL_SERVER = 'https://sugoi-br-api.loca.lt';
-        const localRes = await fetch(`${LOCAL_SERVER}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
+        const url = `${LOCAL_SERVER}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&imdbId=${activeAnime?.imdbId || ''}&type=${activeAnime?.type || 'serie'}`;
+        const localRes = await fetch(url);
         if (localRes.ok) {
           const localData = await localRes.json();
           if (localData.data && localData.data.length > 0) {
@@ -526,7 +551,8 @@ export default function Home() {
         // 2. Tentar o Servidor Cloud (Render)
         const CLOUD_SERVER = 'https://serveranimesite.onrender.com';
         try {
-          const cloudRes = await fetch(`${CLOUD_SERVER}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
+          const url = `${CLOUD_SERVER}/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&imdbId=${activeAnime?.imdbId || ''}&type=${activeAnime?.type || 'serie'}`;
+          const cloudRes = await fetch(url);
           if (cloudRes.ok) {
             const cloudData = await cloudRes.json();
             if (cloudData.data && cloudData.data.length > 0) {
@@ -539,7 +565,8 @@ export default function Home() {
       if (!foundData) {
         // 3. Fallback Netlify API
         try {
-          const res = await fetch(`/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&type=${activeAnime?.type || 'serie'}`);
+          const url = `/api/episode/${baseSlug}/${currentSea}/${currentEp}?tmdbId=${activeAnime?.tmdbId || ''}&imdbId=${activeAnime?.imdbId || ''}&type=${activeAnime?.type || 'serie'}`;
+          const res = await fetch(url);
           const data = await res.json();
           if (data.data && data.data.length > 0) foundData = data.data;
         } catch (e) { }
@@ -786,7 +813,8 @@ export default function Home() {
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2">
-          <SidebarItem icon={<HomeIcon />} label="Início" active={view === 'catalog'} onClick={() => setView('catalog')} />
+          <SidebarItem icon={<HomeIcon />} label="Animes" active={view === 'catalog'} onClick={() => setView('catalog')} />
+          <SidebarItem icon={<Play />} label="Filmes" active={view === 'movies'} onClick={() => setView('movies')} />
           <SidebarItem icon={<Compass />} label="Explorar" />
           <SidebarItem icon={<History />} label="Histórico" />
           <SidebarItem icon={<Heart />} label="Favoritos" />
@@ -942,6 +970,38 @@ export default function Home() {
                 </section>
 
               </div>
+            </motion.div>
+          ) : view === 'movies' ? (
+            <motion.div
+              key="movies"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="px-8 lg:px-16 py-8 pb-20 space-y-12"
+            >
+              <section>
+                <h2 className="text-4xl font-black tracking-tighter mb-8 flex items-center gap-3">
+                  <Play className="w-10 h-10 text-primary" /> Filmes e Séries <span className="text-xs bg-primary px-2 py-0.5 rounded text-white tracking-widest uppercase ml-2">Mundial</span>
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-4">
+                  {INITIAL_CATALOG.filter(a => a.type === 'movie').map((movie: any) => (
+                    <AnimeCard key={movie.slug} anime={movie} />
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-black tracking-tight mb-4 flex items-center gap-2">
+                  Sugeridos para você <ChevronRight className="w-4 h-4 text-primary" />
+                </h2>
+                <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide">
+                  {INITIAL_CATALOG.filter(a => a.type === 'serie').map((anime) => (
+                    <div key={anime.slug} className="min-w-[180px] lg:min-w-[220px]">
+                      <AnimeCard anime={anime} />
+                    </div>
+                  ))}
+                </div>
+              </section>
             </motion.div>
           ) : (
             <motion.div
