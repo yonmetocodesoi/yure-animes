@@ -621,10 +621,11 @@ export default function Home() {
 
   // Fetch dynamic catalog from Jikan API (MyAnimeList) - User requested
   useEffect(() => {
-    // 1. Initial Load from local data immediately so the page is never empty
-    setTrendingAnimes(INITIAL_CATALOG.slice(0, 10));
-    setPopularAnimes(INITIAL_CATALOG.slice(10, 20));
-    setDubbedAnimes(INITIAL_CATALOG.filter(a => a.dubbedAvailable));
+    // 1. Initial Load: Somente animes para as fileiras de animes
+    const initialAnimes = INITIAL_CATALOG.filter(a => a.type === 'serie');
+    setTrendingAnimes(initialAnimes.slice(0, 10));
+    setPopularAnimes(initialAnimes.slice(10, 20));
+    setDubbedAnimes(initialAnimes.filter(a => a.dubbedAvailable));
 
     const fetchCatalog = async () => {
       try {
@@ -965,6 +966,21 @@ export default function Home() {
                       <div key={anime.slug} className="min-w-[180px] lg:min-w-[220px]">
                         <AnimeCard anime={anime} />
                       </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* NOVO: Filmes em Destaque na Home */}
+                <section className="pt-8 border-t border-white/5">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-black tracking-tight flex items-center gap-2 text-primary">
+                      <Play className="w-6 h-6 fill-current" /> Filmes Mundiais (EmbedMovies)
+                    </h2>
+                    <button onClick={() => setView('movies')} className="text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white transition-colors">Ver todos</button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-4">
+                    {INITIAL_CATALOG.filter(a => a.type === 'movie').slice(0, 7).map((movie: any) => (
+                      <AnimeCard key={movie.slug} anime={movie} />
                     ))}
                   </div>
                 </section>
