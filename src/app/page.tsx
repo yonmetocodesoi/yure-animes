@@ -448,7 +448,7 @@ const INITIAL_CATALOG = [
     imdbId: "tt0167260",
     slug: "o-senhor-dos-aneis-o-retorno-do-rei",
     image: "https://image.tmdb.org/t/p/w500/rCzp5NdzPaiZzw4STqU6dt9cyas.jpg",
-    category: "Fantasia / Aventura",
+    category: "Fantasia",
     rating: "9.0",
     status: "Filme",
     description: "Frodo e Sam continuam sua jornada para destruir o Um Anel enquanto Aragorn lidera o mundo dos homens contra Sauron.",
@@ -460,10 +460,46 @@ const INITIAL_CATALOG = [
     imdbId: "tt0816692",
     slug: "interestelar",
     image: "https://image.tmdb.org/t/p/w500/gEU2QniE6EwfVDxCST29CgqbpYn.jpg",
-    category: "Ficção Científica",
+    category: "Sci-Fi",
     rating: "8.7",
     status: "Filme",
     description: "Um grupo de exploradores viaja através de um buraco de minhoca no espaço na tentativa de garantir a sobrevivência da humanidade.",
+    type: "movie"
+  },
+  {
+    mediaId: 100003,
+    title: "Deadpool & Wolverine",
+    imdbId: "tt5311514",
+    slug: "deadpool-and-wolverine",
+    image: "https://image.tmdb.org/t/p/w500/8cdWjvZQUmX1YAh90TSM08pGaTb.jpg",
+    category: "Ação / Comédia",
+    rating: "8.1",
+    status: "Filme",
+    description: "Wolverine se recupera de seus ferimentos quando cruza o caminho do tagarela Deadpool.",
+    type: "movie"
+  },
+  {
+    mediaId: 100004,
+    title: "Coringa",
+    imdbId: "tt7131622",
+    slug: "joker",
+    image: "https://image.tmdb.org/t/p/w500/udDclKVXv9qZfwWgqwsREWgR0Ac.jpg",
+    category: "Drama / Crime",
+    rating: "8.4",
+    status: "Filme",
+    description: "Arthur Fleck, um comediante fracassado, é levado à loucura e se torna o símbolo de uma revolução.",
+    type: "movie"
+  },
+  {
+    mediaId: 100005,
+    title: "Vingadores: Ultimato",
+    imdbId: "tt4154796",
+    slug: "vingadores-ultimato",
+    image: "https://image.tmdb.org/t/p/w500/or06vSfywiP9u9YvNiZGCOrduYm.jpg",
+    category: "Ação",
+    rating: "8.4",
+    status: "Filme",
+    description: "Após os eventos devastadores de Guerra Infinita, os Vingadores se reúnem para desfazer as ações de Thanos.",
     type: "movie"
   }
 ];
@@ -619,60 +655,76 @@ export default function Home() {
   const [popularAnimes, setPopularAnimes] = useState<any[]>([]);
   const [dubbedAnimes, setDubbedAnimes] = useState<any[]>([]);
 
-  // Fetch dynamic catalog from Jikan API (MyAnimeList) - User requested
+  // Fetch dynamic catalog from AniList (Mais estável e fotos melhores)
   useEffect(() => {
-    // 1. Initial Load: Somente animes para as fileiras de animes
     const initialAnimes = INITIAL_CATALOG.filter(a => a.type === 'serie');
     setTrendingAnimes(initialAnimes.slice(0, 10));
     setPopularAnimes(initialAnimes.slice(10, 20));
     setDubbedAnimes(initialAnimes.filter(a => a.dubbedAvailable));
 
-    const fetchCatalog = async () => {
+    const fetchAniList = async () => {
       try {
-        // 1. Trending (Airing)
-        const resTrending = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=15');
-        const dataTrending = await resTrending.json();
+        const query = `
+          query {
+            trending: Page(page: 1, perPage: 12) {
+              media(sort: TRENDING_DESC, type: ANIME) {
+                title { english romaji }
+                coverImage { large }
+                averageScore
+                genres
+                description
+              }
+            }
+            popular: Page(page: 1, perPage: 12) {
+              media(sort: POPULAR_DESC, type: ANIME) {
+                title { english romaji }
+                coverImage { large }
+                averageScore
+                genres
+                description
+              }
+            }
+            dubbed: Page(page: 1, perPage: 12) {
+              media(sort: SCORE_DESC, type: ANIME, countryOfOrigin: "JP") {
+                title { english romaji }
+                coverImage { large }
+                averageScore
+                genres
+                description
+              }
+            }
+          }
+        `;
+        const res = await fetch('https://graphql.anilist.co', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const data = await res.json();
 
-        // 2. Popular
-        const resPopular = await fetch('https://api.jikan.moe/v4/top/anime?limit=15');
-        const dataPopular = await resPopular.json();
-
-        // 3. Dubbed row mix (High rated/Popular)
-        const resDubbed = await fetch('https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=12');
-        const dataDubbed = await resDubbed.json();
-
-        const mapJikan = (list: any[]) => list.map(a => ({
-          title: a.title_english || a.title,
-          slug: (a.title_english || a.title).toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, ''),
-          image: a.images.jpg.large_image_url,
-          rating: a.score ? a.score.toFixed(1) : '8.5',
-          category: a.genres[0]?.name || 'Anime',
-          status: a.status || 'Finalizado',
-          description: a.synopsis?.replace(/\[Written by MAL Rewrite\]/g, '') || 'Assista a este anime incrível no Sugoi Online.',
+        const mapAniList = (list: any[]) => list.map(m => ({
+          title: m.title.english || m.title.romaji,
+          slug: (m.title.english || m.title.romaji).toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, ''),
+          image: m.coverImage.large,
+          rating: (m.averageScore / 10).toFixed(1),
+          category: m.genres[0] || 'Anime',
+          status: 'Online',
+          description: m.description?.replace(/<br>/g, '') || 'Assista no Sugoi Online.',
           type: 'serie'
         }));
 
-        if (dataTrending.data && dataTrending.data.length > 0) {
-          setTrendingAnimes(mapJikan(dataTrending.data));
+        if (data.data?.trending?.media) setTrendingAnimes(mapAniList(data.data.trending.media));
+        if (data.data?.popular?.media) setPopularAnimes(mapAniList(data.data.popular.media));
+        if (data.data?.dubbed?.media) {
+          const apiDubbed = mapAniList(data.data.dubbed.media);
+          setDubbedAnimes([...INITIAL_CATALOG.filter(a => a.dubbedAvailable), ...apiDubbed].slice(0, 15));
         }
-
-        if (dataPopular.data && dataPopular.data.length > 0) {
-          setPopularAnimes(mapJikan(dataPopular.data));
-        }
-
-        if (dataDubbed.data && dataDubbed.data.length > 0) {
-          const mappedDubbed = mapJikan(dataDubbed.data);
-          // Combine local known dubbed with API discovered ones
-          setDubbedAnimes([...INITIAL_CATALOG.filter(a => a.dubbedAvailable), ...mappedDubbed].slice(0, 15));
-        }
-
       } catch (err) {
-        console.error("Jikan Fetch Error:", err);
+        console.error("AniList Error:", err);
       }
     };
 
-    // Delay to let initial catalog show first and avoid rate limiting
-    const timer = setTimeout(fetchCatalog, 800);
+    const timer = setTimeout(fetchAniList, 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -745,14 +797,12 @@ export default function Home() {
   const proxyUrl = (url: string) => {
     if (!url) return 'https://placehold.co/400x600/1a1a1a/ffffff?text=Sugoi+Anime';
 
-    // Se for do TMDB, carrega direto por ser mais estável
-    if (url.includes('tmdb.org')) return url;
+    // Para URLs que já são do proxy ou TMDB, retornar direto
+    if (url.includes('googleusercontent') || url.includes('tmdb.org')) return url;
 
-    const cleanUrl = url.replace(/^https?:\/\//, '');
-
-    // Sistema de Proxy Triplo (Tenta o mais rápido primeiro)
-    // 1. wsrv.nl (Alias moderno e mais rápido do weserv)
-    return `https://wsrv.nl/?url=https://${cleanUrl}&w=500&output=webp&q=80&n=-1`;
+    // NOVO: Proxy do Google Focus (O mais resiliente para capas de animes/filmes)
+    const encoded = encodeURIComponent(url);
+    return `https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=${encoded}`;
   };
 
   const getProxyUrl = (url: string) => proxyUrl(url);
